@@ -17,9 +17,7 @@ public class Token {
     private boolean revoked ; // tran thai thu hoi
     private boolean expired ; // token bi het han chua
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user ;
+
 
 
 

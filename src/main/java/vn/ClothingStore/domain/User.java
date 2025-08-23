@@ -23,19 +23,18 @@ public class User {
     private LocalDate dateOfBirth ;
     private boolean facebookLinked;
     private boolean googleLinked;
-
+    private String refreshToken ;
     @ManyToOne
     @JoinColumn(name = "role_id")
     private Role role;
-
-    @OneToMany(mappedBy = "user")
-    private List<Token> tokens;
 
     @OneToMany(mappedBy = "user")
     private List<SocialAccount> socialAccounts;
 
     @OneToMany(mappedBy = "user")
     private List<Order> orders;
+
+
 
 
 }
