@@ -2,6 +2,7 @@ package vn.ClothingStore.domain;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
+import vn.ClothingStore.util.constant.OrderStatusEnum;
 
 import java.time.Instant;
 import java.util.List;
@@ -28,7 +29,7 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     @Column(columnDefinition = "ENUM('PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED') DEFAULT 'PENDING'")
-    private OrderStatus status; // trang thai don hang chi duoc phep nhan mot so gia tri cu the
+    private OrderStatusEnum status; // trang thai don hang chi duoc phep nhan mot so gia tri cu the
 
     @DecimalMin(value = "0.0")
     private float totalMoney ;

@@ -1,6 +1,6 @@
-package vn.ClothingStore.domain;
+package vn.ClothingStore.util.constant;
 
-public enum OrderStatus {
+public enum OrderStatusEnum {
     PENDING,
     PROCESSING,
     SHIPPED,
