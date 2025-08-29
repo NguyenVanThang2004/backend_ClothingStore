@@ -1,21 +1,27 @@
 package vn.ClothingStore.dtos;
 
 import jakarta.validation.constraints.NotBlank;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class LoginDTO {
     @NotBlank(message = "email khong duoc de trong")
-    private String username ;
+    private String email;
     @NotBlank(message = "password khong duoc de trong")
-    private String password ;
+    private String password;
 
-    public String getUsername() {
-        return username;
+    // Getter & Setter cho email
+    public String getEmail() {
+        return email;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
+    // Getter & Setter cho password
     public String getPassword() {
         return password;
     }
@@ -23,4 +29,5 @@ public class LoginDTO {
     public void setPassword(String password) {
         this.password = password;
     }
+
 }

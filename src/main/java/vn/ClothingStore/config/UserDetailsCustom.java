@@ -13,7 +13,7 @@ import java.util.Collections;
 
 @Component("userDetailsService")
 public class UserDetailsCustom implements UserDetailsService {
-    private final UserService userService ;
+    private final UserService userService;
 
     public UserDetailsCustom(UserService userService) {
         this.userService = userService;
@@ -21,15 +21,14 @@ public class UserDetailsCustom implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        vn.ClothingStore.domain.User user = userService.GetUserByUsername(username);
+        vn.ClothingStore.domain.User user = this.userService.handleGetUserByUsername(username);
 
         if (user == null) {
             throw new UsernameNotFoundException("Username/password không hợp lệ");
         }
         return new User(
-                user.getUsername(),
+                user.getEmail(),
                 user.getPassword(),
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
-        );
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
     }
 }

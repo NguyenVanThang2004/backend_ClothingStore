@@ -33,27 +33,29 @@ public class SecurityConfiguration {
     private String jwtKey;
 
     @Bean // ma hoa mat khau su dung thuat toan Bcrypt
-    public PasswordEncoder passwordEncoder(){
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean //
-    public SecurityFilterChain filterChain(HttpSecurity http ,CustomAuthenticationEntryPoint customAuthenticationEntryPoint) throws Exception{
+    public SecurityFilterChain filterChain(HttpSecurity http,
+            CustomAuthenticationEntryPoint customAuthenticationEntryPoint) throws Exception {
         http
-                .csrf(csrf-> csrf.disable())
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(
-                        authz->authz
-                                .requestMatchers("/api/v1/auth/**","/login").permitAll()
+                        authz -> authz
+                                .requestMatchers("/", "/api/v1/login").permitAll()
                                 .anyRequest().authenticated()
 
                 )
-                .oauth2ResourceServer((oauth2)->oauth2.jwt(Customizer.withDefaults()).authenticationEntryPoint(customAuthenticationEntryPoint)) // bao ve entrypoint API
+                .oauth2ResourceServer((oauth2) -> oauth2.jwt(Customizer.withDefaults())
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)) // bao ve entrypoint API
                 .exceptionHandling(
-                         exceptions -> exceptions
-                                 .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint()) //401
-                                 .accessDeniedHandler(new BearerTokenAccessDeniedHandler())) //403
-                .formLogin(f->f.disable())
-                .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                        exceptions -> exceptions
+                                .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint()) // 401
+                                .accessDeniedHandler(new BearerTokenAccessDeniedHandler())) // 403
+                .formLogin(f -> f.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
 
@@ -78,12 +80,10 @@ public class SecurityConfiguration {
         return new NimbusJwtEncoder(new ImmutableSecret<>(getSecretKey()));
     }
 
-
     private SecretKey getSecretKey() {
         byte[] keyBytes = Base64.from(jwtKey).decode();
         return new SecretKeySpec(keyBytes, 0, keyBytes.length, SecurityUtil.JWT_ALGORITHM.getName());
     }
-
 
     @Bean // convert data chua trong token , luu vao Spring securityContext de tai su dung
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
