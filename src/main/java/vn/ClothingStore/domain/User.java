@@ -39,6 +39,8 @@ public class User {
     private LocalDate dateOfBirth;
     private boolean facebookLinked;
     private boolean googleLinked;
+
+    @Column(columnDefinition = "MEDIUMTEXT")
     private String refreshToken;
     @ManyToOne
     @JoinColumn(name = "role_id")

@@ -14,16 +14,20 @@ import vn.ClothingStore.dtos.ResCreateUserDTO;
 import vn.ClothingStore.dtos.ResUpdateUserDTO;
 import vn.ClothingStore.dtos.ResUserDTO;
 import vn.ClothingStore.dtos.ResultPaginationDTO;
+import vn.ClothingStore.repository.RoleRepository;
 import vn.ClothingStore.repository.UserRepository;
 
 @Service
 public class UserService {
+
+    private final RoleRepository roleRepository;
     private final UserRepository userRepository;
     private final RoleService roleService;
 
-    public UserService(UserRepository userRepository, RoleService roleService) {
+    public UserService(UserRepository userRepository, RoleService roleService, RoleRepository roleRepository) {
         this.userRepository = userRepository;
         this.roleService = roleService;
+        this.roleRepository = roleRepository;
     }
 
     public List<User> getAllUser() {
@@ -131,6 +135,14 @@ public class UserService {
         res.setAddress(user.getAddress());
         res.setUpdateAt(user.getUpdatedAt());
         return res;
+    }
+
+    public void updateUserToken(String token, String email) {
+        User currentUser = this.handleGetUserByUsername(email);
+        if (currentUser != null) {
+            currentUser.setRefreshToken(token);
+            this.userRepository.save(currentUser);
+        }
     }
 
 }

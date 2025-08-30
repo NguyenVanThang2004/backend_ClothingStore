@@ -9,6 +9,8 @@ import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
 
+import vn.ClothingStore.dtos.ResLoginDTO;
+
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
@@ -16,7 +18,7 @@ import java.util.Optional;
 @Service
 public class SecurityUtil {
 
-    private final JwtEncoder jwtEncoder ;
+    private final JwtEncoder jwtEncoder;
     public static final MacAlgorithm JWT_ALGORITHM = MacAlgorithm.HS512;
 
     public SecurityUtil(JwtEncoder jwtEncoder) {
@@ -24,25 +26,44 @@ public class SecurityUtil {
     }
 
     @Value("${backend.jwt.base64-secret}")
-    private String jwtKey ;
-    @Value("${backend.jwt.token-validity-in-seconds}")
-    private long jwtExpiration ;
+    private String jwtKey;
+    @Value("${backend.jwt.access-token-validity-in-seconds}")
+    private long accessTokenExpiration;
+    @Value("${backend.jwt.refresh-token-validity-in-seconds}")
+    private long refreshTokenExpiration;
 
-
-    public String CreateToken(Authentication authentication){
+    public String createAccessToken(Authentication authentication, ResLoginDTO.UserLogin resLoginDTO) {
         Instant now = Instant.now();
-        Instant validity = now.plus(this.jwtExpiration, ChronoUnit.SECONDS);
+        Instant validity = now.plus(this.accessTokenExpiration, ChronoUnit.SECONDS);
 
 // @formatter:off
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuedAt(now)
                 .expiresAt(validity)
                 .subject(authentication.getName())
-                .claim("backend", authentication)
+                .claim("user", resLoginDTO)
                 .build();
         JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();
         return this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader,claims)).getTokenValue();
     }
+
+
+        public String CreateRefreshToken(String email,ResLoginDTO resLoginDTO) {
+        Instant now = Instant.now();
+        Instant validity = now.plus(this.refreshTokenExpiration, ChronoUnit.SECONDS);
+
+// @formatter:off
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuedAt(now)
+                .expiresAt(validity)
+                .subject(email) // dinh danh nguoi dung la ai 
+                .claim("user", resLoginDTO.getUser()) // chi nhung thanh phan mieu ta cho bien object 
+                .build();
+        JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();
+        return this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader,claims)).getTokenValue();
+    }
+
+    
 
 
 
