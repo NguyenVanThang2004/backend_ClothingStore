@@ -9,6 +9,7 @@ import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 import vn.ClothingStore.dtos.RestResponse;
+import vn.ClothingStore.util.annotation.ApiMessage;
 
 @RestControllerAdvice
 public class FormatRestResponse implements ResponseBodyAdvice<Object> {
@@ -20,35 +21,33 @@ public class FormatRestResponse implements ResponseBodyAdvice<Object> {
 
     @Override
     public Object beforeBodyWrite(Object body,
-                                  MethodParameter returnType,
-                                  MediaType selectedContentType,
-                                  Class selectedConverterType,
-                                  ServerHttpRequest request,
-                                  ServerHttpResponse response) {
+            MethodParameter returnType,
+            MediaType selectedContentType,
+            Class selectedConverterType,
+            ServerHttpRequest request,
+            ServerHttpResponse response) {
 
-        HttpServletResponse servletResponse= ((ServletServerHttpResponse) response).getServletResponse();
+        HttpServletResponse servletResponse = ((ServletServerHttpResponse) response).getServletResponse();
         int status = servletResponse.getStatus();
 
-
-        RestResponse<Object> res =  new RestResponse<>();
+        RestResponse<Object> res = new RestResponse<>();
         res.setStatusCode(status);
 
-        if(body instanceof String){
-            return body ;
+        if (body instanceof String) {
+            return body;
         }
-        if(status >=400){
+        if (status >= 400) {
 
             return body;
 
         } else {
             // case success
             res.setData(body);
-            res.setMessage("CALL API SUCCESS");
+            ApiMessage message = returnType.getMethodAnnotation(ApiMessage.class);
+            res.setMessage(message != null ? message.value() : "CALL API SUCCESS");
 
         }
-
 
         return res;
     }
 }
-
