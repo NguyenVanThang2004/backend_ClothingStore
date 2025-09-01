@@ -10,6 +10,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import vn.ClothingStore.domain.User;
@@ -18,6 +19,8 @@ import vn.ClothingStore.dtos.ResLoginDTO;
 import vn.ClothingStore.dtos.ResLoginDTO.UserLogin;
 import vn.ClothingStore.service.UserService;
 import vn.ClothingStore.util.SecurityUtil;
+import vn.ClothingStore.util.annotation.ApiMessage;
+import vn.ClothingStore.util.error.IdInvalidException;
 
 @RestController
 @RequestMapping("api/v1")
@@ -48,7 +51,7 @@ public class AuthControler {
                                                                                                                     // org.springframework.security.core.Authentication;
 
         // create token
-
+        // set thong tin nguoi dung dang nhap vao context(co the dung cho sau nay)
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         ResLoginDTO res = new ResLoginDTO();
@@ -59,7 +62,7 @@ public class AuthControler {
                     currentUserDB.getFullName());
             res.setUser(userLogin);
         }
-        String access_token = this.securityUtil.createAccessToken(authentication, res.getUser());
+        String access_token = this.securityUtil.createAccessToken(authentication.getName(), res.getUser());
         res.setAccessToken(access_token);
 
         // create refresh token
@@ -99,4 +102,52 @@ public class AuthControler {
         return ResponseEntity.ok().body(userLogin);
 
     }
+
+    @GetMapping("/auth/refresh")
+    @ApiMessage("Get User by refresh token")
+    public ResponseEntity<ResLoginDTO> getRefreshToken(@CookieValue(name = "refresh_token") String refresh_token)
+            throws IdInvalidException {
+        // check valid
+        Jwt decodedToken = this.securityUtil.checkValidRefreshToken(refresh_token);
+        String email = decodedToken.getSubject();
+
+        // check user by token + email
+        User currentUser = this.userService.getUserByRefreshTokenAndEmail(refresh_token, email);
+
+        if (currentUser == null) {
+            throw new IdInvalidException("refresh token khong hop le");
+        }
+
+        ResLoginDTO res = new ResLoginDTO();
+
+        User currentUserDB = this.userService.handleGetUserByUsername(email);
+        if (currentUserDB != null) {
+            ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(currentUserDB.getId(), currentUserDB.getEmail(),
+                    currentUserDB.getFullName());
+            res.setUser(userLogin);
+        }
+
+        String access_token = this.securityUtil.createAccessToken(email, res.getUser());
+        res.setAccessToken(access_token);
+
+        // create refresh token
+        String new_refresh_token = this.securityUtil.CreateRefreshToken(email, res);
+
+        // update user
+        this.userService.updateUserToken(new_refresh_token, email);
+
+        // set cookies
+
+        ResponseCookie responseCookie = ResponseCookie.from("refresh_token", new_refresh_token)
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(refreshTokenExpiration)
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, responseCookie.toString())
+                .body(res);
+    }
+
 }
