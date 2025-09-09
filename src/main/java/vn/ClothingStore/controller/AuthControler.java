@@ -16,10 +16,10 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import vn.ClothingStore.domain.User;
-import vn.ClothingStore.dtos.LoginDTO;
-import vn.ClothingStore.dtos.ResCreateUserDTO;
-import vn.ClothingStore.dtos.ResLoginDTO;
-import vn.ClothingStore.dtos.ResLoginDTO.UserLogin;
+import vn.ClothingStore.domain.request.ReqLoginDTO;
+import vn.ClothingStore.domain.response.ResLoginDTO;
+import vn.ClothingStore.domain.response.ResLoginDTO.UserLogin;
+import vn.ClothingStore.domain.response.user.ResCreateUserDTO;
 import vn.ClothingStore.service.UserService;
 import vn.ClothingStore.util.SecurityUtil;
 import vn.ClothingStore.util.annotation.ApiMessage;
@@ -45,8 +45,14 @@ public class AuthControler {
         this.passwordEncoder = passwordEncoder;
     }
 
+    @GetMapping("/auth/me")
+    public Object me(Authentication authentication) {
+        System.out.println(">>> authorities = " + authentication.getAuthorities());
+        return authentication;
+    }
+
     @PostMapping("/auth/login")
-    public ResponseEntity<ResLoginDTO> login(@Valid @RequestBody LoginDTO loginDTO) {
+    public ResponseEntity<ResLoginDTO> login(@Valid @RequestBody ReqLoginDTO loginDTO) {
 
         // Nạp input gồm username/password vào Security
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
@@ -63,8 +69,17 @@ public class AuthControler {
 
         User currentUserDB = this.userService.handleGetUserByUsername(loginDTO.getEmail());
         if (currentUserDB != null) {
-            ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(currentUserDB.getId(), currentUserDB.getEmail(),
-                    currentUserDB.getFullName());
+            ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin();
+            userLogin.setId(currentUserDB.getId());
+            userLogin.setEmail(currentUserDB.getEmail());
+            userLogin.setName(currentUserDB.getFullName());
+
+            if (currentUserDB.getRole() != null) {
+                userLogin.setRole(new ResLoginDTO.RoleDTO(
+                        currentUserDB.getRole().getId(),
+                        currentUserDB.getRole().getName()));
+            }
+
             res.setUser(userLogin);
         }
         String access_token = this.securityUtil.createAccessToken(authentication.getName(), res.getUser());
@@ -129,8 +144,17 @@ public class AuthControler {
 
         User currentUserDB = this.userService.handleGetUserByUsername(email);
         if (currentUserDB != null) {
-            ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(currentUserDB.getId(), currentUserDB.getEmail(),
-                    currentUserDB.getFullName());
+            ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin();
+            userLogin.setId(currentUserDB.getId());
+            userLogin.setEmail(currentUserDB.getEmail());
+            userLogin.setName(currentUserDB.getFullName());
+
+            if (currentUserDB.getRole() != null) {
+                userLogin.setRole(new ResLoginDTO.RoleDTO(
+                        currentUserDB.getRole().getId(),
+                        currentUserDB.getRole().getName()));
+            }
+
             res.setUser(userLogin);
         }
 
@@ -147,7 +171,7 @@ public class AuthControler {
 
         ResponseCookie responseCookie = ResponseCookie.from("refresh_token", new_refresh_token)
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .path("/")
                 .maxAge(refreshTokenExpiration)
                 .build();
@@ -173,7 +197,7 @@ public class AuthControler {
         ResponseCookie deleteSpringCookie = ResponseCookie
                 .from("refresh_token", null)
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .path("/")
                 .maxAge(0)
                 .build();

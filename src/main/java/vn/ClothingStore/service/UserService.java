@@ -10,10 +10,10 @@ import org.springframework.stereotype.Service;
 
 import vn.ClothingStore.domain.Role;
 import vn.ClothingStore.domain.User;
-import vn.ClothingStore.dtos.ResCreateUserDTO;
-import vn.ClothingStore.dtos.ResUpdateUserDTO;
-import vn.ClothingStore.dtos.ResUserDTO;
-import vn.ClothingStore.dtos.ResultPaginationDTO;
+import vn.ClothingStore.domain.response.ResultPaginationDTO;
+import vn.ClothingStore.domain.response.user.ResCreateUserDTO;
+import vn.ClothingStore.domain.response.user.ResUpdateUserDTO;
+import vn.ClothingStore.domain.response.user.ResUserDTO;
 import vn.ClothingStore.repository.RoleRepository;
 import vn.ClothingStore.repository.UserRepository;
 
@@ -34,13 +34,12 @@ public class UserService {
         return this.userRepository.findAll();
     }
 
-    // create user
     public User createUser(User user) {
-        // check role
-        if (user.getRole() != null) {
-            Role r = this.roleService.fetchById(user.getRole().getId());
-            user.setRole(r != null ? r : null);
-        }
+        // luôn set role mặc định là USER
+        Role defaultRole = this.roleRepository.findByName("USER")
+                .orElseThrow(() -> new RuntimeException("Default role USER not found"));
+
+        user.setRole(defaultRole);
 
         return this.userRepository.save(user);
     }
@@ -52,7 +51,14 @@ public class UserService {
         res.setEmail(user.getEmail());
         res.setFullName(user.getFullName());
         res.setPhoneNumber(user.getPhoneNumber());
+        res.setDateOfBirth(user.getDateOfBirth());
         res.setCreatedAt(user.getCreatedAt());
+
+        if (user.getRole() != null) {
+            res.setRole(new ResCreateUserDTO.RoleDTO(
+                    user.getRole().getId(),
+                    user.getRole().getName()));
+        }
 
         return res;
     }
@@ -64,8 +70,17 @@ public class UserService {
         res.setFullName(user.getFullName());
         res.setPhoneNumber(user.getPhoneNumber());
         res.setAddress(user.getAddress());
+        res.setDateOfBirth(user.getDateOfBirth());
+        res.setFacebookLinked(user.isFacebookLinked());
+        res.setGoogleLinked(user.isGoogleLinked());
         res.setCreatedAt(user.getCreatedAt());
         res.setUpdateAt(user.getUpdatedAt());
+
+        if (user.getRole() != null) {
+            res.setRole(new ResUserDTO.RoleDTO(
+                    user.getRole().getId(),
+                    user.getRole().getName()));
+        }
 
         return res;
     }
@@ -113,8 +128,8 @@ public class UserService {
         return rs;
     }
 
-    public User handleUpdateUser(User user) {
-        User currentUser = this.fetchUserById(user.getId());
+    public User handleUpdateUser(int id, User user) {
+        User currentUser = this.fetchUserById(id);
         if (currentUser != null) {
 
             currentUser.setFullName(user.getFullName());
@@ -134,6 +149,13 @@ public class UserService {
         res.setPhoneNumber(user.getPhoneNumber());
         res.setAddress(user.getAddress());
         res.setUpdateAt(user.getUpdatedAt());
+
+        if (user.getRole() != null) {
+            res.setRole(new ResUpdateUserDTO.RoleDTO(
+                    user.getRole().getId(),
+                    user.getRole().getName()));
+        }
+
         return res;
     }
 

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 
 import com.nimbusds.jose.util.Base64;
 
-import vn.ClothingStore.dtos.ResLoginDTO;
+import vn.ClothingStore.domain.response.ResLoginDTO;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -43,10 +43,8 @@ public class SecurityUtil {
         Instant now = Instant.now();
         Instant validity = now.plus(this.accessTokenExpiration, ChronoUnit.SECONDS);
 
-        // hardcode permission (for testing)
-        List<String> listAuthority = new ArrayList<String>();
-
-        listAuthority.add("ROLE_USER");
+        // lấy role từ user
+        String roleName = "ROLE_" + resLoginDTO.getRole().getName();
 
 // @formatter:off
         JwtClaimsSet claims = JwtClaimsSet.builder()
@@ -54,7 +52,7 @@ public class SecurityUtil {
                 .expiresAt(validity)
                 .subject(email)
                 .claim("user", resLoginDTO)
-                .claim("permission", listAuthority)
+                .claim("role", roleName)
                 .build();
         JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();
         return this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader,claims)).getTokenValue();

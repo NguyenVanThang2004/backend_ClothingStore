@@ -18,10 +18,10 @@ import com.turkraft.springfilter.boot.Filter;
 
 import jakarta.validation.Valid;
 import vn.ClothingStore.domain.User;
-import vn.ClothingStore.dtos.ResCreateUserDTO;
-import vn.ClothingStore.dtos.ResUpdateUserDTO;
-import vn.ClothingStore.dtos.ResUserDTO;
-import vn.ClothingStore.dtos.ResultPaginationDTO;
+import vn.ClothingStore.domain.response.ResultPaginationDTO;
+import vn.ClothingStore.domain.response.user.ResCreateUserDTO;
+import vn.ClothingStore.domain.response.user.ResUpdateUserDTO;
+import vn.ClothingStore.domain.response.user.ResUserDTO;
 import vn.ClothingStore.service.UserService;
 import vn.ClothingStore.util.annotation.ApiMessage;
 import vn.ClothingStore.util.error.IdInvalidException;
@@ -91,12 +91,13 @@ public class UserController {
                 this.userService.fetchAllUser(spec, pageable));
     }
 
-    @PutMapping("/users")
+    @PutMapping("/users/{id}")
     @ApiMessage("Update a user")
-    public ResponseEntity<ResUpdateUserDTO> updateUser(@RequestBody User user) throws IdInvalidException {
-        User ericUser = this.userService.handleUpdateUser(user);
+    public ResponseEntity<ResUpdateUserDTO> updateUser(@PathVariable("id") int id, @RequestBody User user)
+            throws IdInvalidException {
+        User ericUser = this.userService.handleUpdateUser(id, user);
         if (ericUser == null) {
-            throw new IdInvalidException("User với id = " + user.getId() + " không tồn tại");
+            throw new IdInvalidException("User với id = " + id + " không tồn tại");
         }
         return ResponseEntity.ok(this.userService.convertToResUpdateUserDTO(ericUser));
     }

@@ -1,4 +1,4 @@
-package vn.ClothingStore.dtos;
+package vn.ClothingStore.domain.response;
 
 import lombok.Getter;
 import lombok.Setter;

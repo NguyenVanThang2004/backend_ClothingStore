@@ -1,10 +1,9 @@
 package vn.ClothingStore.util.error;
 
-import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
-import org.springframework.dao.DataIntegrityViolationException;
+import vn.ClothingStore.domain.response.RestResponse;
+
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -26,7 +25,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
-import vn.ClothingStore.dtos.RestResponse;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -34,76 +32,115 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalException {
 
-    // handle all exception
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<RestResponse<Object>> handleAllException(Exception ex) {
-        RestResponse<Object> res = new RestResponse<Object>();
-        res.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
-        res.setMessage(ex.getMessage());
-        res.setError("Internal Server Error");
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+    // ===== Helpers =====
+    private ResponseEntity<RestResponse<Object>> build(HttpStatus status, String error, Object message) {
+        RestResponse<Object> res = new RestResponse<>();
+        res.setStatusCode(status.value());
+        res.setError(error);
+        res.setMessage(message);
+        return ResponseEntity.status(status).body(res);
     }
 
-    @ExceptionHandler(value = {
-            UsernameNotFoundException.class,
-            BadCredentialsException.class,
-            IdInvalidException.class,
-    })
-    public ResponseEntity<RestResponse<Object>> handleIdException(Exception ex) {
-        RestResponse<Object> res = new RestResponse<Object>();
-        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
-        res.setMessage(ex.getMessage());
-        res.setError("Exception occurs...");
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    // ===== Authn/Authz (ưu tiên dùng AuthenticationEntryPoint/AccessDeniedHandler
+    // ở Security filter) =====
+
+    // Sai username hoặc mật khẩu -> 401
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<RestResponse<Object>> handleBadCredentials(BadCredentialsException ex) {
+        // KHÔNG phân biệt cụ thể để tránh lộ thông tin tài khoản
+        return build(HttpStatus.UNAUTHORIZED, "Unauthorized", "Username hoặc mật khẩu không đúng");
     }
 
-    @ExceptionHandler(value = {
-            NoResourceFoundException.class,
-    })
-    public ResponseEntity<RestResponse<Object>> handleNotFoundException(Exception ex) {
-        RestResponse<Object> res = new RestResponse<Object>();
-        res.setStatusCode(HttpStatus.NOT_FOUND.value());
-        res.setMessage(ex.getMessage());
-        res.setError("404 Not Found. URL may not exist...");
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    // Cho phép hiển thị khi bạn đã setHideUserNotFoundExceptions(false)
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<RestResponse<Object>> handleUsernameNotFound(UsernameNotFoundException ex) {
+        return build(HttpStatus.UNAUTHORIZED, "Unauthorized", ex.getMessage());
     }
+
+    // Thiếu/Token sai
+    @ExceptionHandler({ BadJwtException.class, JwtException.class })
+    public ResponseEntity<RestResponse<Object>> handleJwt(Exception ex) {
+        return build(HttpStatus.UNAUTHORIZED, "Unauthorized", "Token không hợp lệ hoặc đã hết hạn");
+    }
+
+    // Không đủ quyền -> 403
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<RestResponse<Object>> handleAccessDenied(AccessDeniedException ex) {
+        return build(HttpStatus.FORBIDDEN, "Forbidden", "Bạn không có quyền truy cập tài nguyên này");
+    }
+
+    // ===== Validation/Request errors -> 400 =====
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<RestResponse<Object>> validationError(MethodArgumentNotValidException ex) {
+    public ResponseEntity<RestResponse<Object>> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
         BindingResult result = ex.getBindingResult();
-        final List<FieldError> fieldErrors = result.getFieldErrors();
-
-        RestResponse<Object> res = new RestResponse<Object>();
-        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
-        res.setError(ex.getBody().getDetail());
-
-        List<String> errors = fieldErrors.stream().map(f -> f.getDefaultMessage()).collect(Collectors.toList());
-        res.setMessage(errors.size() > 1 ? errors : errors.get(0));
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+        List<String> messages = result.getFieldErrors()
+                .stream()
+                .map(FieldError::getDefaultMessage)
+                .collect(Collectors.toList());
+        Object message = messages.size() <= 1 ? (messages.isEmpty() ? "Yêu cầu không hợp lệ" : messages.get(0))
+                : messages;
+        return build(HttpStatus.BAD_REQUEST, "Bad Request", message);
     }
 
-    // @ExceptionHandler(value = {
-    // StorageException.class,
-    // })
-    // public ResponseEntity<RestResponse<Object>>
-    // handleFileUploadException(Exception ex) {
-    // RestResponse<Object> res = new RestResponse<Object>();
-    // res.setStatusCode(HttpStatus.BAD_REQUEST.value());
-    // res.setMessage(ex.getMessage());
-    // res.setError("Exception upload file...");
-    // return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
-    // }
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<RestResponse<Object>> handleConstraintViolation(ConstraintViolationException ex) {
+        List<String> messages = ex.getConstraintViolations()
+                .stream()
+                .map(v -> v.getMessage())
+                .collect(Collectors.toList());
+        Object message = messages.size() <= 1 ? (messages.isEmpty() ? "Yêu cầu không hợp lệ" : messages.get(0))
+                : messages;
+        return build(HttpStatus.BAD_REQUEST, "Bad Request", message);
+    }
 
-    // @ExceptionHandler(value = {
-    // PermissionException.class,
-    // })
-    // public ResponseEntity<RestResponse<Object>>
-    // handlePermissionException(Exception ex) {
-    // RestResponse<Object> res = new RestResponse<Object>();
-    // res.setStatusCode(HttpStatus.FORBIDDEN.value());
-    // res.setError("Forbidden");
-    // res.setMessage(ex.getMessage());
-    // return ResponseEntity.status(HttpStatus.FORBIDDEN).body(res);
-    // }
+    @ExceptionHandler({
+            MissingServletRequestParameterException.class,
+            MissingRequestHeaderException.class,
+            MethodArgumentTypeMismatchException.class,
+            HttpMessageNotReadableException.class
+    })
+    public ResponseEntity<RestResponse<Object>> handleBadRequest(Exception ex) {
+        return build(HttpStatus.BAD_REQUEST, "Bad Request", ex.getMessage());
+    }
+
+    // ===== Routing/HTTP protocol =====
+
+    // Sai method -> 405
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<RestResponse<Object>> handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex) {
+        return build(HttpStatus.METHOD_NOT_ALLOWED, "Method Not Allowed", ex.getMessage());
+    }
+
+    // Sai Content-Type -> 415
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<RestResponse<Object>> handleUnsupportedMediaType(HttpMediaTypeNotSupportedException ex) {
+        return build(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Unsupported Media Type", ex.getMessage());
+    }
+
+    // Không tìm thấy endpoint -> 404
+    @ExceptionHandler({ NoHandlerFoundException.class, NoResourceFoundException.class })
+    public ResponseEntity<RestResponse<Object>> handleNotFound(Exception ex) {
+        return build(HttpStatus.NOT_FOUND, "Not Found", "URL không tồn tại");
+    }
+
+    // Thiếu path variable hoặc mismatch nghiêm trọng -> 400 (tuỳ chọn)
+    @ExceptionHandler(MissingPathVariableException.class)
+    public ResponseEntity<RestResponse<Object>> handleMissingPathVar(MissingPathVariableException ex) {
+        return build(HttpStatus.BAD_REQUEST, "Bad Request", ex.getMessage());
+    }
+
+    // ===== App-specific =====
+
+    @ExceptionHandler(IdInvalidException.class)
+    public ResponseEntity<RestResponse<Object>> handleIdInvalid(IdInvalidException ex) {
+        return build(HttpStatus.BAD_REQUEST, "Bad Request", ex.getMessage());
+    }
+
+    // ===== Fallback: lỗi không lường trước -> 500 =====
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<RestResponse<Object>> handleAll(Exception ex) {
+        // Có thể ẩn message chi tiết trong production
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", ex.getMessage());
+    }
 }

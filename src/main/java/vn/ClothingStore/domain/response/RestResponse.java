@@ -1,12 +1,12 @@
-package vn.ClothingStore.dtos;
+package vn.ClothingStore.domain.response;
 
 public class RestResponse<T> {
-    private int statusCode ;
-    private String error ;
+    private int statusCode;
+    private String error;
 
     // message co the la string , hoac arrayList
-    private Object message ;
-    private T data ;
+    private Object message;
+    private T data;
 
     public int getStatusCode() {
         return statusCode;

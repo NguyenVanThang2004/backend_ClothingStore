@@ -1,4 +1,4 @@
-package vn.ClothingStore.dtos;
+package vn.ClothingStore.domain.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
@@ -6,7 +6,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class LoginDTO {
+public class ReqLoginDTO {
     @NotBlank(message = "email khong duoc de trong")
     private String email;
     @NotBlank(message = "password khong duoc de trong")

@@ -8,7 +8,8 @@ import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
-import vn.ClothingStore.dtos.RestResponse;
+
+import vn.ClothingStore.domain.response.RestResponse;
 import vn.ClothingStore.util.annotation.ApiMessage;
 
 @RestControllerAdvice

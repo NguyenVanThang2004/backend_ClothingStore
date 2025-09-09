@@ -37,8 +37,8 @@ public class User {
     private String updatedBy;
     private boolean isActive = true;
     private LocalDate dateOfBirth;
-    private boolean facebookLinked;
-    private boolean googleLinked;
+    private boolean facebookLinked = false;
+    private boolean googleLinked = false;
 
     @Column(columnDefinition = "MEDIUMTEXT")
     private String refreshToken;
