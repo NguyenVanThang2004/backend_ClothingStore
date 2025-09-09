@@ -137,6 +137,11 @@ public class GlobalException {
         return build(HttpStatus.BAD_REQUEST, "Bad Request", ex.getMessage());
     }
 
+    @ExceptionHandler(StorageException.class)
+    public ResponseEntity<RestResponse<Object>> handleIdInvalid(StorageException ex) {
+        return build(HttpStatus.BAD_REQUEST, "Bad Request", ex.getMessage());
+    }
+
     // ===== Fallback: lỗi không lường trước -> 500 =====
     @ExceptionHandler(Exception.class)
     public ResponseEntity<RestResponse<Object>> handleAll(Exception ex) {

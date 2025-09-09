@@ -56,7 +56,7 @@ public class SecurityConfiguration {
                                 .requestMatchers(HttpMethod.PUT, "/api/v1/users/**").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.DELETE, "/api/v1/users/**").hasRole("ADMIN")
 
-                                .anyRequest().authenticated()
+                                .anyRequest().permitAll()
 
                 )
                 .oauth2ResourceServer(
