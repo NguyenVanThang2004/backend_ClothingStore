@@ -2,28 +2,30 @@ package vn.ClothingStore.domain;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.Instant;
 import java.util.List;
 
 @Entity
 @Table(name = "products")
+@Getter
+@Setter
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id ;
-    private String name ;
+    private int id;
+    private String name;
     // ten san pham
     @DecimalMin(value = "0.0")
-    private float price ;
-
-    private String thumbnail ;//url , duong dan anh dai dien
+    private float price;
 
     @Column(columnDefinition = "MEDIUMTEXT")
     private String description;
 
-    private Instant createdAt ;
-    private Instant updatedAt ;
+    private Instant createdAt;
+    private Instant updatedAt;
 
     @ManyToOne
     @JoinColumn(name = "category_id")
@@ -37,7 +39,5 @@ public class Product {
 
     @OneToMany(mappedBy = "product")
     private List<ProductImage> productImages;
-
-
 
 }

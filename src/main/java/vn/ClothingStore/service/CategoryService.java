@@ -6,7 +6,6 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 import vn.ClothingStore.domain.Category;
-import vn.ClothingStore.domain.User;
 import vn.ClothingStore.repository.CategoryRepository;
 
 @Service
@@ -18,7 +17,7 @@ public class CategoryService {
         this.categoryRepository = categoryRepository;
     }
 
-    public Category fetchUserById(int id) {
+    public Category fetchCategoryById(int id) {
         Optional<Category> categoryOptional = this.categoryRepository.findById(id);
         if (categoryOptional.isPresent()) {
             return categoryOptional.get();

@@ -49,7 +49,7 @@ public class CategoryController {
     @ApiMessage("Delete category success")
     public ResponseEntity<Void> deleteCategory(@PathVariable("id") int id) throws IdInvalidException {
 
-        Category currentCategory = this.categoryService.fetchUserById(id);
+        Category currentCategory = this.categoryService.fetchCategoryById(id);
 
         if (currentCategory == null) {
             throw new IdInvalidException("Category với id = " + id + " không tồn tại");
