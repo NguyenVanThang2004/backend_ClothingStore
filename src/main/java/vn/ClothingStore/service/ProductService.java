@@ -24,10 +24,13 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryService categoryService;
+    private final ProductImageService productImageService;
 
-    public ProductService(ProductRepository productRepository, CategoryService categoryService) {
+    public ProductService(ProductRepository productRepository, CategoryService categoryService,
+            ProductImageService productImageService) {
         this.productRepository = productRepository;
         this.categoryService = categoryService;
+        this.productImageService = productImageService;
     }
 
     public ResProductDTO convertToResProductDTO(Product product) {
@@ -37,10 +40,20 @@ public class ProductService {
         res.setPrice(product.getPrice());
         res.setDescription(product.getDescription());
 
+        // category
         if (product.getCategory() != null) {
             res.setCategory(
                     new ResProductDTO.CategoryDTO(product.getCategory().getId(), product.getCategory().getName()));
         }
+
+        // map images
+        List<ResProductDTO.ProductImageDTO> imgs = product.getProductImages().stream()
+                .map(img -> new ResProductDTO.ProductImageDTO(
+                        img.getId(),
+                        img.getUrl(),
+                        img.isThumbnail()))
+                .toList();
+        res.setImages(imgs);
 
         return res;
     }

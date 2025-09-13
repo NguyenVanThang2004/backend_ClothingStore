@@ -2,17 +2,28 @@ package vn.ClothingStore.domain;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
+import lombok.Getter;
+import lombok.Setter;
+import vn.ClothingStore.util.constant.ColorEnum;
+import vn.ClothingStore.util.constant.OrderStatusEnum;
+import vn.ClothingStore.util.constant.SizeEnum;
 
 import java.util.List;
+
 @Entity
-@Table(name ="productVariants" )
+@Table(name = "productVariants")
+@Getter
+@Setter
 public class ProductVariant {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-
-    private String size;   // S, M, L, 29, 30, 31
-    private String color;  // Đỏ, Xanh, Trắng
+    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "ENUM('BLACK', 'WHITE', 'GRAY', 'BLUE')")
+    private ColorEnum color;
+    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "ENUM('S', 'M', 'L', 'XL')")
+    private SizeEnum size; // S, M, L, 29, 30, 31
 
     @DecimalMin(value = "0.0")
     private float price;
