@@ -5,5 +5,6 @@ import org.springframework.stereotype.Repository;
 import vn.ClothingStore.domain.Category;
 
 @Repository
-public interface CategoryRepository extends JpaRepository<Category ,Integer> {
+public interface CategoryRepository extends JpaRepository<Category, Integer> {
+    boolean existsByName(String name);
 }

@@ -26,6 +26,8 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -98,7 +100,7 @@ public class GlobalException {
             MissingServletRequestParameterException.class,
             MissingRequestHeaderException.class,
             MethodArgumentTypeMismatchException.class,
-            HttpMessageNotReadableException.class
+
     })
     public ResponseEntity<RestResponse<Object>> handleBadRequest(Exception ex) {
         return build(HttpStatus.BAD_REQUEST, "Bad Request", ex.getMessage());
@@ -137,10 +139,28 @@ public class GlobalException {
         return build(HttpStatus.BAD_REQUEST, "Bad Request", ex.getMessage());
     }
 
+    @ExceptionHandler(StorageException.class)
+    public ResponseEntity<RestResponse<Object>> handleIdInvalid(StorageException ex) {
+        return build(HttpStatus.BAD_REQUEST, "Bad Request", ex.getMessage());
+    }
+
     // ===== Fallback: lỗi không lường trước -> 500 =====
     @ExceptionHandler(Exception.class)
     public ResponseEntity<RestResponse<Object>> handleAll(Exception ex) {
         // Có thể ẩn message chi tiết trong production
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", ex.getMessage());
+    }
+
+    // ===== Bắt lỗi parse Enum -> 400 =====
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<RestResponse<Object>> handleInvalidFormat(InvalidFormatException ex) {
+        if (ex.getTargetType().isEnum()) {
+            String message = "Giá trị không hợp lệ: " + ex.getValue()
+                    + ". Hãy chọn một trong: "
+                    + java.util.Arrays.toString(ex.getTargetType().getEnumConstants());
+
+            return build(HttpStatus.BAD_REQUEST, "Invalid enum value", message);
+        }
+        return build(HttpStatus.BAD_REQUEST, "Invalid format", ex.getMessage());
     }
 }
