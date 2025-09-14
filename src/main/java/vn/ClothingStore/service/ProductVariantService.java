@@ -2,6 +2,7 @@ package vn.ClothingStore.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -68,6 +69,15 @@ public class ProductVariantService {
         pv.setStockQuantity(req.getStockQuantity());
 
         return this.productVariantRepository.save(pv);
+    }
+
+    public List<ResProductVariantDTO> getProductVariantByProductId(int productId) throws IdInvalidException {
+        List<ProductVariant> variants = this.productVariantRepository.findByProduct_Id(productId);
+        if (variants == null || variants.isEmpty()) {
+            throw new IdInvalidException("Product này không có biến thể nào");
+        }
+
+        return variants.stream().map(this::convertToResProductVariantDTO).collect(Collectors.toList());
     }
 
 }

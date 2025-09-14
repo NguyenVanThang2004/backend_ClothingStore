@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import vn.ClothingStore.domain.ProductVariant;
@@ -46,6 +47,14 @@ public class ProductVariantController {
         ProductVariant pv = this.productVariantService.updateProductVariant(variantId, productId, req);
 
         return ResponseEntity.ok().body(this.productVariantService.convertToResProductVariantDTO(pv));
+    }
+
+    @GetMapping("/productVariant/{productId}/variants")
+    public ResponseEntity<List<ResProductVariantDTO>> getProductVariantByProductId(
+            @PathVariable("productId") int productId)
+            throws IdInvalidException {
+        List<ResProductVariantDTO> ls = this.productVariantService.getProductVariantByProductId(productId);
+        return ResponseEntity.ok().body(ls);
     }
 
 }

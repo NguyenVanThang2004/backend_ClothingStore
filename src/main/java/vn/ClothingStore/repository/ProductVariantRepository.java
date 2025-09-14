@@ -14,6 +14,8 @@ import vn.ClothingStore.util.constant.SizeEnum;
 public interface ProductVariantRepository extends JpaRepository<ProductVariant, Integer> {
     List<ProductVariant> findByProductId(int productId);
 
+    List<ProductVariant> findByProduct_Id(int productId);
+
     Optional<ProductVariant> findByProductIdAndColorAndSize(int productId, ColorEnum color, SizeEnum size);
 
     boolean existsByProduct_IdAndColorAndSize(int productId, ColorEnum color, SizeEnum size);

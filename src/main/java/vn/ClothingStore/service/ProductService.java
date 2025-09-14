@@ -39,21 +39,14 @@ public class ProductService {
         res.setName(product.getName());
         res.setPrice(product.getPrice());
         res.setDescription(product.getDescription());
+        res.setCreatedAt(product.getCreatedAt());
+        res.setUpdatedAt(product.getUpdatedAt());
 
         // category
         if (product.getCategory() != null) {
             res.setCategory(
                     new ResProductDTO.CategoryDTO(product.getCategory().getId(), product.getCategory().getName()));
         }
-
-        // map images
-        List<ResProductDTO.ProductImageDTO> imgs = product.getProductImages().stream()
-                .map(img -> new ResProductDTO.ProductImageDTO(
-                        img.getId(),
-                        img.getUrl(),
-                        img.isThumbnail()))
-                .toList();
-        res.setImages(imgs);
 
         return res;
     }

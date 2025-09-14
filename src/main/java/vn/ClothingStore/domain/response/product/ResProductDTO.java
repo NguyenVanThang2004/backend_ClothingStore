@@ -1,5 +1,6 @@
 package vn.ClothingStore.domain.response.product;
 
+import java.time.Instant;
 import java.util.List;
 
 import lombok.AllArgsConstructor;
@@ -15,8 +16,10 @@ public class ResProductDTO {
     private String name;
     private float price;
     private String description;
+    private Instant createdAt;
+    private Instant updatedAt;
+
     private CategoryDTO category;
-    private List<ProductImageDTO> images;
 
     @Getter
     @Setter
@@ -25,16 +28,6 @@ public class ResProductDTO {
     public static class CategoryDTO {
         private int id;
         private String name;
-    }
-
-    @Getter
-    @Setter
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class ProductImageDTO {
-        private int id;
-        private String url;
-        private boolean thumbnail;
     }
 
 }
