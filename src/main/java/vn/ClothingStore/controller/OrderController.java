@@ -1,0 +1,60 @@
+package vn.ClothingStore.controller;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.turkraft.springfilter.boot.Filter;
+
+import vn.ClothingStore.domain.Order;
+import vn.ClothingStore.domain.Product;
+import vn.ClothingStore.domain.request.order.ReqOrderDTO;
+import vn.ClothingStore.domain.request.order.ReqUpdateOrderStatusDTO;
+import vn.ClothingStore.domain.response.ResultPaginationDTO;
+import vn.ClothingStore.domain.response.order.ResOrderDTO;
+import vn.ClothingStore.service.OrderService;
+import vn.ClothingStore.util.annotation.ApiMessage;
+import vn.ClothingStore.util.error.IdInvalidException;
+
+@RestController
+@RequestMapping("/api/v1")
+public class OrderController {
+
+    private final OrderService orderService;
+
+    public OrderController(OrderService orderService) {
+        this.orderService = orderService;
+    }
+
+    @GetMapping("/orders")
+    @ApiMessage("get orders success")
+    public ResponseEntity<ResultPaginationDTO> getAllOrder(
+            @Filter Specification<Order> spec,
+            Pageable pageable) {
+        return ResponseEntity.ok(this.orderService.fetchAllOrder(spec, pageable));
+    }
+
+    @PostMapping("/orders")
+    @ApiMessage("create order success")
+    ResponseEntity<ResOrderDTO> createOrder(@RequestBody ReqOrderDTO req) throws IdInvalidException {
+        Order order = this.orderService.createOrder(req);
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.orderService.convertToResOrderDTO(order));
+    }
+
+    @PutMapping("/orders/{id}")
+    @ApiMessage("update order success")
+    public ResponseEntity<ResOrderDTO> updateOrderStatus(@PathVariable int id,
+            @RequestBody ReqUpdateOrderStatusDTO req) throws IdInvalidException {
+        Order order = this.orderService.updateOrderStatus(id, req);
+        return ResponseEntity.ok().body(this.orderService.convertToResOrderDTO(order));
+    }
+
+}
