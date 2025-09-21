@@ -16,7 +16,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import vn.ClothingStore.domain.User;
-import vn.ClothingStore.domain.request.ReqLoginDTO;
+import vn.ClothingStore.domain.request.login.ReqLoginDTO;
 import vn.ClothingStore.domain.response.ResLoginDTO;
 import vn.ClothingStore.domain.response.ResLoginDTO.UserLogin;
 import vn.ClothingStore.domain.response.user.ResCreateUserDTO;

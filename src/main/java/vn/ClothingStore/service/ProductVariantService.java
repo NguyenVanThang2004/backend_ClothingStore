@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 import vn.ClothingStore.domain.Product;
 import vn.ClothingStore.domain.ProductVariant;
-import vn.ClothingStore.domain.request.ReqUploadProductVariantDTO;
+import vn.ClothingStore.domain.request.variant.ReqUploadProductVariantDTO;
 import vn.ClothingStore.domain.response.product.ResProductVariantDTO;
 import vn.ClothingStore.repository.ProductVariantRepository;
 import vn.ClothingStore.util.error.IdInvalidException;

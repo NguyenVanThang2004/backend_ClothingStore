@@ -204,8 +204,18 @@ public class OrderService {
     public Order updateOrderStatus(int orderId, ReqUpdateOrderStatusDTO req) throws IdInvalidException {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IdInvalidException("Không tìm thấy đơn hàng với id " + orderId));
-        OrderStatusEnum status = req.getStatus();
-        switch (status) {
+
+        OrderStatusEnum currentStatus = order.getStatus();
+        OrderStatusEnum newStatus = req.getStatus();
+
+        // Validate flow hợp lệ
+        if (!isValidTransition(currentStatus, newStatus)) {
+            throw new IllegalStateException("Không thể cập nhật từ " + currentStatus + " sang " + newStatus);
+        }
+        switch (newStatus) {
+            case PENDING -> {
+                order.setStatus(OrderStatusEnum.PENDING);
+            }
             case PROCESSING -> {
                 order.setStatus(OrderStatusEnum.PROCESSING);
             }
@@ -232,6 +242,23 @@ public class OrderService {
         }
 
         return orderRepository.save(order);
+    }
+
+    private boolean isValidTransition(OrderStatusEnum current, OrderStatusEnum next) {
+        if (current == OrderStatusEnum.PENDING) {
+            return next == OrderStatusEnum.PROCESSING || next == OrderStatusEnum.CANCELLED;
+        }
+        if (current == OrderStatusEnum.PROCESSING) {
+            return next == OrderStatusEnum.SHIPPED || next == OrderStatusEnum.CANCELLED;
+        }
+        if (current == OrderStatusEnum.SHIPPED) {
+            return next == OrderStatusEnum.DELIVERED;
+        }
+        if (current == OrderStatusEnum.CANCELLED) {
+            return false;
+        }
+
+        return false;
     }
 
     private String generateTrackingNumber(Order order) {

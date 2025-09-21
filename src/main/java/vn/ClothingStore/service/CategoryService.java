@@ -1,35 +1,30 @@
 package vn.ClothingStore.service;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import lombok.RequiredArgsConstructor;
 import vn.ClothingStore.domain.Category;
 import vn.ClothingStore.repository.CategoryRepository;
+import vn.ClothingStore.util.error.IdInvalidException;
 
 @Service
+@RequiredArgsConstructor
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
 
-    public CategoryService(CategoryRepository categoryRepository) {
-        this.categoryRepository = categoryRepository;
+    public Category fetchCategoryById(int id) throws IdInvalidException {
+        return this.categoryRepository.findById(id)
+                .orElseThrow(() -> new IdInvalidException("Category với id = " + id + " không tồn tại"));
     }
 
-    public Category fetchCategoryById(int id) {
-        Optional<Category> categoryOptional = this.categoryRepository.findById(id);
-        if (categoryOptional.isPresent()) {
-            return categoryOptional.get();
+    public Category createCategory(Category category) throws IdInvalidException {
+        boolean exists = this.categoryRepository.existsByName(category.getName());
+        if (exists) {
+            throw new IdInvalidException("Category " + category.getName() + " đã tồn tại, vui lòng chọn tên khác.");
         }
-        return null;
-    }
-
-    public boolean existsByName(String name) {
-        return this.categoryRepository.existsByName(name);
-    }
-
-    public Category createCategory(Category category) {
         return this.categoryRepository.save(category);
     }
 
@@ -37,8 +32,9 @@ public class CategoryService {
         return this.categoryRepository.findAll();
     }
 
-    public void deleteCategory(int id) {
-        this.categoryRepository.deleteById(id);
+    public void deleteCategory(int id) throws IdInvalidException {
+        Category category = this.categoryRepository.findById(id)
+                .orElseThrow(() -> new IdInvalidException("Category với id = " + id + " không tồn tại"));
+        this.categoryRepository.delete(category);
     }
-
 }
