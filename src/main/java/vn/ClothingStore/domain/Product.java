@@ -41,6 +41,9 @@ public class Product {
     @OneToMany(mappedBy = "product")
     private List<ProductImage> productImages;
 
+    @OneToMany(mappedBy = "product")
+    private List<Review> reviews;
+
     @PrePersist
     public void handleBeforeCreate() {
         this.createdAt = Instant.now();
