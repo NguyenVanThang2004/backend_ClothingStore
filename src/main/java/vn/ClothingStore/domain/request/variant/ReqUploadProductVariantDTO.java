@@ -1,4 +1,4 @@
-package vn.ClothingStore.domain.request;
+package vn.ClothingStore.domain.request.variant;
 
 import lombok.Getter;
 import lombok.Setter;

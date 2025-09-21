@@ -1,6 +1,7 @@
 package vn.ClothingStore.util;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -53,7 +54,7 @@ public final class FileUploadUtil {
         }
 
         // Xác thực nội dung là ảnh thật sự (không chỉ đổi đuôi)
-        try (var is = file.getInputStream()) {
+        try (InputStream is = file.getInputStream()) {
             if (ImageIO.read(is) == null) { // không decode được ảnh
                 throw new StorageException("Invalid image data.");
             }

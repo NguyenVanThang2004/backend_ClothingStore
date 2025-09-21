@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import vn.ClothingStore.domain.ProductVariant;
-import vn.ClothingStore.domain.request.ReqUploadProductVariantDTO;
+import vn.ClothingStore.domain.request.variant.ReqUploadProductVariantDTO;
 import vn.ClothingStore.domain.response.product.ResProductVariantDTO;
 import vn.ClothingStore.service.ProductVariantService;
 import vn.ClothingStore.util.annotation.ApiMessage;

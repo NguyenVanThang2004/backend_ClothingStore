@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import vn.ClothingStore.domain.Category;
 import vn.ClothingStore.domain.Product;
 import vn.ClothingStore.domain.User;
-import vn.ClothingStore.domain.Product;
+import vn.ClothingStore.domain.request.product.ReqProductDTO;
 import vn.ClothingStore.domain.response.ResultPaginationDTO;
 import vn.ClothingStore.domain.response.product.ResProductDTO;
 import vn.ClothingStore.domain.response.product.ResUpdateProductDTO;
@@ -24,13 +24,77 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryService categoryService;
-    private final ProductImageService productImageService;
 
-    public ProductService(ProductRepository productRepository, CategoryService categoryService,
-            ProductImageService productImageService) {
+    public ProductService(ProductRepository productRepository, CategoryService categoryService) {
         this.productRepository = productRepository;
         this.categoryService = categoryService;
-        this.productImageService = productImageService;
+    }
+
+    public Product createProduct(ReqProductDTO req) throws IdInvalidException {
+        Category category = categoryService.fetchCategoryById(req.getCategoryId());
+        if (category == null) {
+            throw new IdInvalidException("Category với id = " + req.getCategoryId() + " không tồn tại");
+        }
+
+        Product product = new Product();
+        product.setName(req.getName());
+        product.setPrice(req.getPrice());
+        product.setDescription(req.getDescription());
+        product.setCategory(category);
+
+        return productRepository.save(product);
+    }
+
+    public Product updateProduct(int id, ReqProductDTO req) throws IdInvalidException {
+        Product currentProduct = this.fetchProductById(id);
+        if (currentProduct == null) {
+            throw new IdInvalidException("Product với id = " + id + " không tồn tại");
+        }
+
+        Category category = categoryService.fetchCategoryById(req.getCategoryId());
+        if (category == null) {
+            throw new IdInvalidException("Category với id = " + req.getCategoryId() + " không tồn tại");
+        }
+
+        currentProduct.setName(req.getName());
+        currentProduct.setPrice(req.getPrice());
+        currentProduct.setDescription(req.getDescription());
+        currentProduct.setCategory(category);
+
+        return productRepository.save(currentProduct);
+    }
+
+    public Product fetchProductById(int id) {
+        return this.productRepository.findById(id).orElse(null);
+    }
+
+    public ResultPaginationDTO fetchAllProduct(Specification<Product> spec, Pageable pageable) {
+        Page<Product> pageProduct = this.productRepository.findAll(spec, pageable);
+
+        ResultPaginationDTO rs = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta mt = new ResultPaginationDTO.Meta();
+
+        mt.setPage(pageable.getPageNumber() + 1);
+        mt.setPageSize(pageable.getPageSize());
+        mt.setPages(pageProduct.getTotalPages());
+        mt.setTotal(pageProduct.getTotalElements());
+        rs.setMeta(mt);
+
+        List<ResProductDTO> listProduct = pageProduct.getContent()
+                .stream()
+                .map(this::convertToResProductDTO)
+                .collect(Collectors.toList());
+
+        rs.setResult(listProduct);
+        return rs;
+    }
+
+    public void deleteProduct(int id) throws IdInvalidException {
+        Product product = this.fetchProductById(id);
+        if (product == null) {
+            throw new IdInvalidException("Product với id = " + id + " không tồn tại");
+        }
+        this.productRepository.delete(product);
     }
 
     public ResProductDTO convertToResProductDTO(Product product) {
@@ -42,81 +106,27 @@ public class ProductService {
         res.setCreatedAt(product.getCreatedAt());
         res.setUpdatedAt(product.getUpdatedAt());
 
-        // category
         if (product.getCategory() != null) {
-            res.setCategory(
-                    new ResProductDTO.CategoryDTO(product.getCategory().getId(), product.getCategory().getName()));
+            res.setCategory(new ResProductDTO.CategoryDTO(
+                    product.getCategory().getId(),
+                    product.getCategory().getName()));
         }
 
         return res;
     }
 
-    // get all product
-    public ResultPaginationDTO fetchAllProduct(Specification<Product> spec, Pageable pageable) {
+    // public ResUpdateProductDTO convertToResUpdateProductDTO(Product product) {
+    // ResUpdateProductDTO res = new ResUpdateProductDTO();
+    // res.setId(product.getId());
+    // res.setName(product.getName());
+    // res.setPrice(product.getPrice());
+    // res.setDescription(product.getDescription());
 
-        Page<Product> pageProduct = this.productRepository.findAll(spec, pageable);
-        ResultPaginationDTO rs = new ResultPaginationDTO();
-        ResultPaginationDTO.Meta mt = new ResultPaginationDTO.Meta();
-
-        mt.setPage(pageable.getPageNumber() + 1);
-        mt.setPageSize(pageable.getPageSize());
-        mt.setPages(pageProduct.getTotalPages());
-        mt.setTotal(pageProduct.getTotalElements());
-
-        rs.setMeta(mt);
-
-        // remove sensitive data
-        List<ResProductDTO> listProduct = pageProduct.getContent()
-                .stream().map(item -> this.convertToResProductDTO(item))
-                .collect(Collectors.toList());
-
-        rs.setResult(listProduct);
-
-        return rs;
-    }
-
-    public Product createProduct(Product product) {
-        return this.productRepository.save(product);
-    }
-
-    public Product updateProduct(int id, Product product) {
-
-        Product currentProduct = this.fetchProductById(id);
-
-        currentProduct.setName(product.getName());
-        currentProduct.setPrice(product.getPrice());
-        currentProduct.setDescription(product.getDescription());
-        currentProduct.setCategory(product.getCategory());
-
-        currentProduct = this.productRepository.save(currentProduct);
-
-        return currentProduct;
-    }
-
-    public ResUpdateProductDTO convertToResUpdateProductDTO(Product product) {
-        ResUpdateProductDTO res = new ResUpdateProductDTO();
-        res.setId(product.getId());
-        res.setName(product.getName());
-        res.setPrice(product.getPrice());
-        res.setDescription(product.getDescription());
-        if (product.getCategory() != null) {
-            res.setCategory(
-                    new ResUpdateProductDTO.CategoryDTO(product.getCategory().getId(),
-                            product.getCategory().getName()));
-        }
-        return res;
-    }
-
-    public Product fetchProductById(int id) {
-        Optional<Product> productOptional = this.productRepository.findById(id);
-        if (productOptional.isPresent()) {
-            return productOptional.get();
-        }
-        return null;
-    }
-
-    public void deleteProduct(int id) {
-        this.productRepository.deleteById(id);
-    }
-
+    // if (product.getCategory() != null) {
+    // res.setCategory(new ResUpdateProductDTO.CategoryDTO(
+    // product.getCategory().getId(),
+    // product.getCategory().getName()));
+    // }
+    // return res;
+    // }
 }
