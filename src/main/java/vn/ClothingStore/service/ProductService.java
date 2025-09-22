@@ -5,7 +5,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -13,10 +15,12 @@ import vn.ClothingStore.domain.Category;
 import vn.ClothingStore.domain.Product;
 import vn.ClothingStore.domain.User;
 import vn.ClothingStore.domain.request.product.ReqProductDTO;
+import vn.ClothingStore.domain.request.product.ReqProductFilter;
 import vn.ClothingStore.domain.response.ResultPaginationDTO;
 import vn.ClothingStore.domain.response.product.ResProductDTO;
 import vn.ClothingStore.domain.response.product.ResUpdateProductDTO;
 import vn.ClothingStore.repository.ProductRepository;
+import vn.ClothingStore.specifications.ProductSpecs;
 import vn.ClothingStore.util.error.IdInvalidException;
 
 @Service
@@ -87,6 +91,30 @@ public class ProductService {
 
         rs.setResult(listProduct);
         return rs;
+    }
+
+    public Page<ResProductDTO> filterProducts(ReqProductFilter req, Pageable pageable) {
+        Specification<Product> spec = Specification
+                .where(ProductSpecs.hasCategory(req.getCategoryId()))
+                .and(ProductSpecs.hasPriceBetween(req.getPriceMin(), req.getPriceMax()))
+                .and(ProductSpecs.hasKeyword(req.getKeyword()));
+
+        // xử lý sort nếu FE truyền vào
+        Sort sort = Sort.unsorted();
+        if (req.getSort() != null && !req.getSort().isEmpty()) {
+            String[] parts = req.getSort().split(",");
+            String field = parts[0];
+            Sort.Direction dir = parts.length > 1 && parts[1].equalsIgnoreCase("desc")
+                    ? Sort.Direction.DESC
+                    : Sort.Direction.ASC;
+            sort = Sort.by(dir, field);
+        }
+
+        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+
+        Page<Product> page = productRepository.findAll(spec, sortedPageable);
+
+        return page.map(this::convertToResProductDTO);
     }
 
     public void deleteProduct(int id) throws IdInvalidException {
