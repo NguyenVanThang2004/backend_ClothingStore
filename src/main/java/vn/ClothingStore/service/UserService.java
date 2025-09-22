@@ -4,7 +4,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +18,7 @@ import vn.ClothingStore.domain.response.user.ResUpdateUserDTO;
 import vn.ClothingStore.domain.response.user.ResUserDTO;
 import vn.ClothingStore.repository.RoleRepository;
 import vn.ClothingStore.repository.UserRepository;
+import vn.ClothingStore.specifications.UserSpecs;
 
 @Service
 public class UserService {
@@ -32,6 +35,22 @@ public class UserService {
 
     public List<User> getAllUser() {
         return this.userRepository.findAll();
+    }
+
+    public Page<ResUserDTO> searchUsers(String keyword, String role, Pageable pageable) {
+        Specification<User> spec = Specification.where(null);
+
+        if (keyword != null && !keyword.isBlank()) {
+            spec = spec.or(UserSpecs.hasKeyword(keyword)
+                    .or(UserSpecs.hasPhoneName(keyword)));
+        }
+        if (role != null && !role.isBlank()) {
+            spec = spec.or(UserSpecs.hasRole(role));
+        }
+
+        Page<User> page = (Page<User>) userRepository.findAll(spec, pageable);
+
+        return page.map(this::convertToResUserDTO);
     }
 
     public User createUser(User user) {

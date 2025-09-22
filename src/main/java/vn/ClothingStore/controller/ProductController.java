@@ -2,6 +2,8 @@ package vn.ClothingStore.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.turkraft.springfilter.boot.Filter;
@@ -21,6 +24,7 @@ import jakarta.validation.Valid;
 import vn.ClothingStore.domain.Category;
 import vn.ClothingStore.domain.Product;
 import vn.ClothingStore.domain.request.product.ReqProductDTO;
+import vn.ClothingStore.domain.request.product.ReqProductFilter;
 import vn.ClothingStore.domain.response.ResultPaginationDTO;
 import vn.ClothingStore.domain.response.product.ResProductDTO;
 import vn.ClothingStore.domain.response.product.ResUpdateProductDTO;
@@ -37,6 +41,27 @@ public class ProductController {
 
     public ProductController(ProductService productService) {
         this.productService = productService;
+    }
+
+    @GetMapping("/filter")
+    public Page<ResProductDTO> filterProducts(
+            @RequestParam(required = false) Integer categoryId,
+            @RequestParam(required = false) Double priceMin,
+            @RequestParam(required = false) Double priceMax,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        ReqProductFilter req = new ReqProductFilter();
+
+        req.setCategoryId(categoryId);
+        req.setPriceMin(priceMin);
+        req.setPriceMax(priceMax);
+        req.setSort(sort);
+        req.setKeyword(keyword);
+
+        Pageable pageable = PageRequest.of(page, size);
+        return productService.filterProducts(req, pageable);
     }
 
     @GetMapping
@@ -75,4 +100,15 @@ public class ProductController {
         this.productService.deleteProduct(id);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/{id}")
+    @ApiMessage("Get product by id success")
+    public ResponseEntity<ResProductDTO> getProductById(@PathVariable("id") int id) throws IdInvalidException {
+        Product product = this.productService.fetchProductById(id);
+        if (product == null) {
+            throw new IdInvalidException("Product với id = " + id + " không tồn tại");
+        }
+        return ResponseEntity.ok(this.productService.convertToResProductDTO(product));
+    }
+
 }

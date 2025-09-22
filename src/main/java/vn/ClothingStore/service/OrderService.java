@@ -7,7 +7,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +30,7 @@ import vn.ClothingStore.repository.OrderRepository;
 import vn.ClothingStore.repository.ProductRepository;
 import vn.ClothingStore.repository.ProductVariantRepository;
 import vn.ClothingStore.repository.UserRepository;
+import vn.ClothingStore.specifications.OrderSpecs;
 import vn.ClothingStore.util.constant.OrderStatusEnum;
 import vn.ClothingStore.util.error.IdInvalidException;
 
@@ -136,6 +139,15 @@ public class OrderService {
         rs.setResult(listOrder);
 
         return rs;
+    }
+
+    public Page<ResOrderDTO> filterStatusOrder(OrderStatusEnum status, Pageable pageable) {
+        Specification<Order> spec = Specification
+                .where(OrderSpecs.hasOrderStatus(status));
+
+        Page<Order> page = orderRepository.findAll(spec, pageable);
+
+        return page.map(this::convertToResOrderDTO);
     }
 
     @Transactional
