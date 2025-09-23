@@ -40,17 +40,28 @@
 - `src/test/java/` - Unit test
 
 ## Hướng dẫn chạy dự án
-1 Clone dự án 
-- git clone https://github.com/NguyenVanThang2004/backend_ClothingStore.git
-- cd backend_ClothingStore
-2 Cấu hình file .env
+
+### 1) Clone dự án
+```bash
+git clone https://github.com/NguyenVanThang2004/backend_ClothingStore.git
+cd backend_ClothingStore
+2) Cấu hình file .env
+Tạo file .env ở thư mục gốc dự án (cùng cấp pom.xml) và điền các biến sau:
+
+env
 DB_URL=jdbc:mysql://localhost:3306/clothingstore
 DB_USERNAME=root
 DB_PASSWORD=123456
+
 CLOUDINARY_CLOUD_NAME=xxx
 CLOUDINARY_API_KEY=xxx
 CLOUDINARY_API_SECRET=xxx
-JWT_SECRET=your_jwt_secret
-3 Chạy ứng dụng
-- ./mvnw spring-boot:run
 
+JWT_SECRET=your_jwt_secret
+Gợi ý: Có thể thêm ?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC vào DB_URL nếu cần.
+
+3) Chạy ứng dụng
+bash
+./mvnw spring-boot:run
+# hoặc
+mvn spring-boot:run
