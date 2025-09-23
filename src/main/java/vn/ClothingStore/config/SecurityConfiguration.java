@@ -53,7 +53,6 @@ public class SecurityConfiguration {
 
                                 // chỉ ADMIN mới được tạo/sửa/xóa user
                                 .requestMatchers(HttpMethod.POST, "/api/v1/users/**").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.PUT, "/api/v1/users/**").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.DELETE, "/api/v1/users/**").hasRole("ADMIN")
 
                                 .anyRequest().permitAll()

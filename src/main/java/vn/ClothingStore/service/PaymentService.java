@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.concurrent.ConcurrentHashMap;
 import java.net.URLEncoder;
 import org.springframework.http.HttpStatus;
 
@@ -17,10 +18,22 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import vn.ClothingStore.config.VnpayConfig;
-import vn.ClothingStore.domain.request.reqVnpayDTO;
+import vn.ClothingStore.domain.payment.reqVnpayDTO;
+import vn.ClothingStore.domain.request.order.ReqOrderDTO;
 
 @Service
 public class PaymentService {
+
+    private final VnpayConfig vnpayConfig;
+    private final OrderService orderService;
+    // Bộ nhớ tạm để map TxnRef -> ReqOrderDTO
+    private final Map<String, ReqOrderDTO> pendingOrders = new ConcurrentHashMap<>();
+
+    public PaymentService(VnpayConfig vnpayConfig, OrderService orderService) {
+        this.vnpayConfig = vnpayConfig;
+        this.orderService = orderService;
+    }
+
     public String createPayment(reqVnpayDTO paymentRequest) throws UnsupportedEncodingException {
         String vnp_Version = "2.1.0";
         String vnp_Command = "pay";
@@ -36,12 +49,11 @@ public class PaymentService {
         String bankCode = "NCB";
         String vnp_TxnRef = VnpayConfig.getRandomNumber(8);
         String vnp_IpAddr = "127.0.0.1";
-        String vnp_TmnCode = VnpayConfig.vnp_TmnCode;
 
         Map<String, String> vnp_Params = new HashMap<>();
         vnp_Params.put("vnp_Version", vnp_Version);
         vnp_Params.put("vnp_Command", vnp_Command);
-        vnp_Params.put("vnp_TmnCode", vnp_TmnCode);
+        vnp_Params.put("vnp_TmnCode", vnpayConfig.getVnpTmnCode());
         vnp_Params.put("vnp_Amount", String.valueOf(amount));
         vnp_Params.put("vnp_CurrCode", "VND");
 
@@ -50,7 +62,7 @@ public class PaymentService {
         vnp_Params.put("vnp_OrderInfo", "Thanh toan don hang:" + vnp_TxnRef);
         vnp_Params.put("vnp_OrderType", orderType);
         vnp_Params.put("vnp_Locale", "vn");
-        // vnp_Params.put("vnp_ReturnUrl", VnpayConfig.vnp_ReturnUrl);
+        vnp_Params.put("vnp_ReturnUrl", vnpayConfig.getVnpReturnUrl());
         vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
 
         Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
@@ -84,18 +96,24 @@ public class PaymentService {
         if (hashData.length() > 0)
             hashData.setLength(hashData.length() - 1);
 
-        String vnp_SecureHash = VnpayConfig.hmacSHA512(VnpayConfig.secretKey, hashData.toString());
+        String vnp_SecureHash = VnpayConfig.hmacSHA512(vnpayConfig.getSecretKey(), hashData.toString());
         query.append("&vnp_SecureHash=").append(vnp_SecureHash);
-        return VnpayConfig.vnp_PayUrl + "?" + query;
+
+        // lưu đơn hàng tạm vào map
+        pendingOrders.put(vnp_TxnRef, paymentRequest.getOrderRequest());
+        return vnpayConfig.getVnpPayUrl() + "?" + query;
     }
 
-    public ResponseEntity<String> handlePaymentReturn(String responseCode) {
-        if ("00".equals(responseCode)) {
-            // xu ly khi thanh toán thành công
-            //
-            return ResponseEntity.ok("Thanh toán thành công!");
-        } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Thanh toán thất bại! Mã lỗi: " + responseCode);
+    public void handlePaymentSuccess(Map<String, String> allParams) {
+        String txnRef = allParams.get("vnp_TxnRef");
+
+        ReqOrderDTO req = pendingOrders.remove(txnRef);
+        if (req != null) {
+            try {
+                orderService.createOrder(req);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 }

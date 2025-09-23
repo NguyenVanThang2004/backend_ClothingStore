@@ -153,6 +153,7 @@ public class UserService {
 
             currentUser.setFullName(user.getFullName());
             currentUser.setAddress(user.getAddress());
+            currentUser.setDateOfBirth(user.getDateOfBirth());
 
             currentUser = this.userRepository.save(currentUser);
         }

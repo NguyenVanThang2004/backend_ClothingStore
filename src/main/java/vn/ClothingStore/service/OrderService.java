@@ -195,6 +195,11 @@ public class OrderService {
             detail.setNumberOfProducts(d.getNumberOfProducts());
             detail.setTotalMoney(d.getPrice() * d.getNumberOfProducts());
 
+            if (variant.getStockQuantity() < d.getNumberOfProducts()) {
+                throw new IdInvalidException("Sản phẩm " + product.getName() + " (" + variant.getColor() + "/"
+                        + variant.getSize() + ") không đủ hàng trong kho!");
+            }
+
             // trừ tồn kho
             variant.setStockQuantity(variant.getStockQuantity() - d.getNumberOfProducts());
             productVariantRepository.save(variant);

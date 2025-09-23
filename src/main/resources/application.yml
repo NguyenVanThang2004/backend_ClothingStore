@@ -32,3 +32,11 @@ cloudinary:
   cloud-name: ${CLOUD_NAME}
   api-key: ${CLOUD_API_KEY}
   api-secret: ${CLOUD_API_SECRET}
+
+
+vnpay:
+  pay-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+  return-url: http://localhost:8080/api/v1/payment/return
+  tmn-code: JGV9MSIF
+  secret-key: E9QLQ1W7KCLQKQLE5522R5JNRR7WIV8I
+  api-url: https://sandbox.vnpayment.vn/merchant_webapi/api/transaction

@@ -14,16 +14,48 @@ import java.security.MessageDigest;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
 import jakarta.servlet.http.HttpServletRequest;
 
+@Component
 public class VnpayConfig {
 
-    public static String vnp_PayUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-    public static String vnp_ReturnUrl = "http://localhost:8080/api/v1/payment/return";
-    // #vnpay
-    public static String vnp_TmnCode = "JGV9MSIF";
-    public static String secretKey = "E9QLQ1W7KCLQKQLE5522R5JNRR7WIV8I";
-    public static String vnp_ApiUrl = "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction";
+    @Value("${vnpay.pay-url}")
+    private String vnpPayUrl;
+
+    @Value("${vnpay.return-url}")
+    private String vnpReturnUrl;
+
+    @Value("${vnpay.tmn-code}")
+    private String vnpTmnCode;
+
+    @Value("${vnpay.secret-key}")
+    private String secretKey;
+
+    @Value("${vnpay.api-url}")
+    private String vnpApiUrl;
+
+    public String getVnpPayUrl() {
+        return vnpPayUrl;
+    }
+
+    public String getVnpReturnUrl() {
+        return vnpReturnUrl;
+    }
+
+    public String getVnpTmnCode() {
+        return vnpTmnCode;
+    }
+
+    public String getSecretKey() {
+        return secretKey;
+    }
+
+    public String getVnpApiUrl() {
+        return vnpApiUrl;
+    }
 
     public static String md5(String message) {
         String digest = null;
@@ -62,24 +94,21 @@ public class VnpayConfig {
     }
 
     // Util for VNPAY
-    public static String hashAllFields(Map fields) {
-        List fieldNames = new ArrayList(fields.keySet());
+    public String hashAllFields(Map<String, String> fields) {
+        List<String> fieldNames = new ArrayList<>(fields.keySet());
         Collections.sort(fieldNames);
         StringBuilder sb = new StringBuilder();
-        Iterator itr = fieldNames.iterator();
-        while (itr.hasNext()) {
-            String fieldName = (String) itr.next();
-            String fieldValue = (String) fields.get(fieldName);
-            if ((fieldValue != null) && (fieldValue.length() > 0)) {
-                sb.append(fieldName);
-                sb.append("=");
-                sb.append(fieldValue);
+        for (Iterator<String> itr = fieldNames.iterator(); itr.hasNext();) {
+            String fieldName = itr.next();
+            String fieldValue = fields.get(fieldName);
+            if (fieldValue != null && fieldValue.length() > 0) {
+                sb.append(fieldName).append("=").append(fieldValue);
             }
             if (itr.hasNext()) {
                 sb.append("&");
             }
         }
-        return hmacSHA512(secretKey, sb.toString());
+        return hmacSHA512(secretKey, sb.toString()); // instance field
     }
 
     public static String hmacSHA512(final String key, final String data) {

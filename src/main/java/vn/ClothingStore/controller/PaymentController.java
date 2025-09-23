@@ -1,5 +1,10 @@
 package vn.ClothingStore.controller;
 
+import java.io.IOException;
+import java.net.URI;
+import java.util.Map;
+
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,10 +16,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.cloudinary.http44.api.Response;
 
-import vn.ClothingStore.domain.request.reqVnpayDTO;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import vn.ClothingStore.domain.payment.reqVnpayDTO;
 import vn.ClothingStore.service.PaymentService;
 
 @RestController
+@Slf4j
 @RequestMapping("/api/v1")
 public class PaymentController {
     private final PaymentService paymentService;
@@ -36,8 +44,23 @@ public class PaymentController {
     }
 
     @GetMapping("/payment/return")
-    public ResponseEntity<String> returnPayment(@RequestParam("vnp_ResponseCode") String responseCode) {
-        return paymentService.handlePaymentReturn(responseCode);
+    public ResponseEntity<Void> returnPayment(@RequestParam Map<String, String> allParams) {
+        String responseCode = allParams.get("vnp_ResponseCode");
+        String redirectUrl;
+
+        if ("00".equals(responseCode)) {
+            // Thanh toán thành công → tạo đơn hàng
+            this.paymentService.handlePaymentSuccess(allParams);
+            redirectUrl = "http://localhost:4200/payment-result?status=SUCCESS";
+            log.info("VNPAY responseCode={}, redirectUrl={}", responseCode, redirectUrl);
+        } else {
+            redirectUrl = "http://localhost:4200/payment-result?status=FAILED";
+            log.warn("VNPAY responseCode={}, redirectUrl={}", responseCode, redirectUrl);
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setLocation(URI.create(redirectUrl));
+        return new ResponseEntity<>(headers, HttpStatus.FOUND); // 302 redirect
     }
 
 }
