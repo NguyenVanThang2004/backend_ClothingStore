@@ -32,3 +32,13 @@ build/
 
 ### VS Code ###
 .vscode/
+
+
+# ==== Env files (hide everywhere) ====
+.env
+.env.*
+**/.env
+**/.env.*
+*/.env
+*/.env.*
+
