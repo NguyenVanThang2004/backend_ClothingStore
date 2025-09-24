@@ -1,5 +1,7 @@
 package vn.ClothingStore.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import vn.ClothingStore.domain.OrderDetail;
@@ -33,6 +35,13 @@ public class ReviewService {
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
         this.orderDetailRepository = orderDetailRepository;
+    }
+    // get review by product
+
+    public List<Review> getReviewsByProductId(int productId) throws IdInvalidException {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new IdInvalidException("Không tìm thấy sản phẩm với id " + productId));
+        return reviewRepository.findByProductId(productId);
     }
 
     public ResReviewDTO convertToResReviewDTO(Review review) {
