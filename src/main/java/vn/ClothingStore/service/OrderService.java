@@ -62,7 +62,7 @@ public class OrderService {
         res.setPhoneNumber(order.getPhoneNumber());
         res.setAddress(order.getAddress());
         res.setNote(order.getNote());
-        res.setOrderDate(Instant.now());
+        res.setOrderDate(order.getOrderDate());
         res.setStatus(order.getStatus());
         res.setTotalMoney(order.getTotalMoney());
         res.setShippingMethod(order.getShippingMethod());
@@ -119,8 +119,15 @@ public class OrderService {
     }
 
     public ResultPaginationDTO fetchAllOrder(Specification<Order> spec, Pageable pageable) {
+        Sort defaultSort = Sort.by(Sort.Order.desc("orderDate").nullsLast());
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                pageable.getSort().isSorted() ? pageable.getSort() : defaultSort
 
-        Page<Order> pageOrder = this.orderRepository.findAll(spec, pageable);
+        );
+
+        Page<Order> pageOrder = this.orderRepository.findAll(spec, sortedPageable);
         ResultPaginationDTO rs = new ResultPaginationDTO();
         ResultPaginationDTO.Meta mt = new ResultPaginationDTO.Meta();
 
@@ -139,6 +146,24 @@ public class OrderService {
         rs.setResult(listOrder);
 
         return rs;
+    }
+
+    public Page<ResOrderDTO> fetchAllOrderByUserId(int userId, Pageable pageable) throws IdInvalidException {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new IdInvalidException("Không tìm thấy user với id " + userId));
+
+        Specification<Order> spec = Specification.where(OrderSpecs.getOrderByUserId(userId));
+
+        Sort defaultSort = Sort.by(Sort.Order.desc("orderDate").nullsLast());
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                pageable.getSort().isSorted() ? pageable.getSort() : defaultSort
+
+        );
+
+        Page<Order> page = orderRepository.findAll(spec, sortedPageable);
+        return page.map(this::convertToResOrderDTO);
     }
 
     public Page<ResOrderDTO> filterStatusOrder(OrderStatusEnum status, Pageable pageable) {

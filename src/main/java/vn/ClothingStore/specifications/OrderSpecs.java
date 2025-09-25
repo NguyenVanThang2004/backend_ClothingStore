@@ -12,4 +12,10 @@ public class OrderSpecs {
             return cb.equal(root.get("status"), status);
         };
     }
+
+    public static Specification<Order> getOrderByUserId(int userId) {
+        return (root, query, cb) -> {
+            return cb.equal(root.get("user").get("id"), userId);
+        };
+    }
 }

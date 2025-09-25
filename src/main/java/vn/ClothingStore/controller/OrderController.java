@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -29,6 +30,7 @@ import vn.ClothingStore.domain.response.order.ResOrderDTO;
 import vn.ClothingStore.service.OrderService;
 import vn.ClothingStore.util.annotation.ApiMessage;
 import vn.ClothingStore.util.error.IdInvalidException;
+import org.springframework.data.domain.Sort;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -44,8 +46,17 @@ public class OrderController {
     @ApiMessage("get orders success")
     public ResponseEntity<ResultPaginationDTO> getAllOrder(
             @Filter Specification<Order> spec,
-            Pageable pageable) {
+            @PageableDefault(size = 10, sort = "orderDate", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(this.orderService.fetchAllOrder(spec, pageable));
+    }
+
+    @GetMapping("/orders/{userId}")
+    @ApiMessage("get orders success")
+    public Page<ResOrderDTO> getAllOrderByUserId(
+            @PathVariable int userId,
+            @PageableDefault(size = 10, sort = "orderDate", direction = Sort.Direction.DESC) Pageable pageable)
+            throws IdInvalidException {
+        return orderService.fetchAllOrderByUserId(userId, pageable);
     }
 
     @GetMapping("/orders/filter")
