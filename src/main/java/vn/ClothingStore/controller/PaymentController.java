@@ -18,7 +18,7 @@ import com.cloudinary.http44.api.Response;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import vn.ClothingStore.domain.payment.reqVnpayDTO;
+import vn.ClothingStore.domain.request.payment.reqVnpayDTO;
 import vn.ClothingStore.service.PaymentService;
 
 @RestController
