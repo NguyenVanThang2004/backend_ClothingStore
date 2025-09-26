@@ -21,10 +21,13 @@ import com.turkraft.springfilter.boot.Filter;
 
 import jakarta.validation.Valid;
 import vn.ClothingStore.domain.User;
+import vn.ClothingStore.domain.request.user.ReqChangePassworDTO;
+import vn.ClothingStore.domain.request.user.ReqResetPassworDTO;
 import vn.ClothingStore.domain.response.ResultPaginationDTO;
 import vn.ClothingStore.domain.response.user.ResCreateUserDTO;
 import vn.ClothingStore.domain.response.user.ResUpdateUserDTO;
 import vn.ClothingStore.domain.response.user.ResUserDTO;
+import vn.ClothingStore.service.OtpService;
 import vn.ClothingStore.service.UserService;
 import vn.ClothingStore.util.annotation.ApiMessage;
 import vn.ClothingStore.util.error.IdInvalidException;
@@ -113,6 +116,23 @@ public class UserController {
             throw new IdInvalidException("User với id = " + id + " không tồn tại");
         }
         return ResponseEntity.ok(this.userService.convertToResUpdateUserDTO(ericUser));
+    }
+
+    @PutMapping("/users/{id}/change-password")
+    @ApiMessage("change password success")
+    public ResponseEntity<String> changePassword(
+            @PathVariable int id,
+            @RequestBody ReqChangePassworDTO req) throws IdInvalidException {
+        this.userService.changePassword(id, req);
+        return ResponseEntity.ok("thay đổi mật khẩu thành công");
+    }
+
+    @PostMapping("/users/forgot-password-reset")
+    @ApiMessage("forgot password reset success")
+    public ResponseEntity<String> resetPassword(@Valid @RequestBody ReqResetPassworDTO req) throws IdInvalidException {
+
+        this.userService.resetPassword(req.getEmail(), req.getNewPassword());
+        return ResponseEntity.ok("Đặt lại mật khẩu thành công, hãy đăng nhập bằng mật khẩu mới");
     }
 
 }

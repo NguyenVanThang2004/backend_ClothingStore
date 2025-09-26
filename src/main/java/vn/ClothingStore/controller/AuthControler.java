@@ -1,6 +1,8 @@
 package vn.ClothingStore.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Pattern;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -17,9 +19,12 @@ import org.springframework.web.bind.annotation.*;
 
 import vn.ClothingStore.domain.User;
 import vn.ClothingStore.domain.request.login.ReqLoginDTO;
+import vn.ClothingStore.domain.request.register.ReqCreateVerifyOtpDTO;
 import vn.ClothingStore.domain.response.ResLoginDTO;
 import vn.ClothingStore.domain.response.ResLoginDTO.UserLogin;
 import vn.ClothingStore.domain.response.user.ResCreateUserDTO;
+import vn.ClothingStore.service.EmailService;
+import vn.ClothingStore.service.OtpService;
 import vn.ClothingStore.service.UserService;
 import vn.ClothingStore.util.SecurityUtil;
 import vn.ClothingStore.util.annotation.ApiMessage;
@@ -33,16 +38,21 @@ public class AuthControler {
     private final SecurityUtil securityUtil;
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
+    private final OtpService otpService;
 
     @Value("${backend.jwt.refresh-token-validity-in-seconds}")
     private long refreshTokenExpiration;
 
     public AuthControler(AuthenticationManagerBuilder authenticationManagerBuilder, SecurityUtil securityUtil,
-            UserService userService, PasswordEncoder passwordEncoder) {
+            UserService userService, PasswordEncoder passwordEncoder, EmailService emailService,
+            OtpService otpService) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.securityUtil = securityUtil;
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
+        this.otpService = otpService;
     }
 
     @GetMapping("/auth/me")
@@ -221,6 +231,82 @@ public class AuthControler {
         user.setPassword(hashPassword);
         User TUser = this.userService.createUser(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.convertToResCreateUserDTO(TUser));
+    }
+
+    @PostMapping("/auth/verify-register-otp")
+    @ApiMessage("Register a new user")
+    public ResponseEntity<String> verigyRegisterOtp(@Valid @RequestBody User user) throws IdInvalidException {
+        boolean isEmailExist = this.userService.isEmailExist(user.getEmail());
+        if (isEmailExist) {
+            throw new IdInvalidException(
+                    "Email " + user.getEmail() + " đã tồn tại, vui lòng sử dụng email khác.");
+
+        }
+
+        this.emailService.sendEmailFromTemplateSync(user.getEmail(), "Xác thực tài toản", "templateVerifyEmail",
+                this.otpService.generateOtp6Digits(user.getEmail()));
+
+        return ResponseEntity.ok("OTP đã gửi qua email ,vui lòng xác thực tài khoản");
+    }
+
+    @PostMapping("/auth/create-verify-otp")
+    @ApiMessage("Verify OTP and create account")
+    public ResponseEntity<String> createAccountAfterVerifyOtp(
+            @Valid @RequestBody ReqCreateVerifyOtpDTO req) throws IdInvalidException {
+
+        boolean valid = this.otpService.verifyOtp(req.getEmail(), req.getOtp());
+        if (!valid) {
+            throw new IdInvalidException("OTP không hợp lệ hoặc đã hết hạn");
+        }
+
+        User user = new User();
+        user.setEmail(req.getEmail());
+        user.setFullName(req.getFullName());
+        user.setPhoneNumber(req.getPhoneNumber());
+        user.setPassword(req.getPassword());
+
+        this.userService.createUser(user);
+
+        return ResponseEntity.ok("Tạo tài khoản thành công, bạn có thể đăng nhập!");
+    }
+
+    @GetMapping("/auth/forgot-password-send-email")
+    @ApiMessage("forgot password send email success")
+    public ResponseEntity<String> forgotPassword(@RequestParam String email) throws IdInvalidException {
+        boolean isEmailExist = this.userService.isEmailExist(email);
+        if (!isEmailExist) {
+            throw new IdInvalidException("vui lòng nhập lại email bạn đã đăng kí");
+
+        }
+
+        String otpCode = otpService.generateOtp6Digits(email);
+        emailService.sendEmailFromTemplateSync(
+                email,
+                "Xác thực quên mật khẩu",
+                "templateForgotPassword",
+                otpCode);
+
+        return ResponseEntity.ok("OTP đã được gửi về email " + email);
+    }
+
+    @PostMapping("/auth/forgot-password-verify-otp")
+    @ApiMessage("forgot password verify otp success")
+    public ResponseEntity<String> verifyOtp(
+            @RequestParam @Email String email,
+            @RequestParam @Pattern(regexp = "\\d{6}") String otp) {
+
+        // 1. Kiểm tra email có tồn tại trong hệ thống không
+        User user = this.userService.getUserByEmail(email);
+        if (user == null) {
+            return ResponseEntity.badRequest().body("Email không tồn tại trong hệ thống");
+        }
+
+        // 2. Kiểm tra OTP hợp lệ
+        boolean valid = otpService.verifyOtp(email, otp);
+        if (!valid) {
+            return ResponseEntity.badRequest().body("OTP không hợp lệ hoặc đã hết hạn");
+        }
+        return ResponseEntity.ok("Xác thực OTP thành công, hãy đặt mật khẩu mới");
     }
 
 }

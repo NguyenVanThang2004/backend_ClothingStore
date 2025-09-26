@@ -43,13 +43,20 @@ public class SecurityConfiguration {
     @Bean //
     public SecurityFilterChain filterChain(HttpSecurity http,
             CustomAuthenticationEntryPoint customAuthenticationEntryPoint) throws Exception {
+
+        String[] whiteList = {
+                "/",
+                "/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/register",
+                "/storage/**",
+                "/api/v1/email/**",
+                "/api/v1/users/forgot-password-reset"
+
+        };
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(
                         authz -> authz
-                                .requestMatchers("/", "/api/v1/auth/login", "/api/v1/auth/ refresh",
-                                        "/api/v1/auth/register")
-                                .permitAll()
+                                .requestMatchers(whiteList).permitAll()
 
                                 // chỉ ADMIN mới được tạo/sửa/xóa user
                                 .requestMatchers(HttpMethod.POST, "/api/v1/users/**").hasRole("ADMIN")

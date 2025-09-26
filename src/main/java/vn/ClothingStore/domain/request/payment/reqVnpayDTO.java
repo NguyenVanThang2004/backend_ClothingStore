@@ -1,4 +1,4 @@
-package vn.ClothingStore.domain.payment;
+package vn.ClothingStore.domain.request.payment;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -18,8 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import vn.ClothingStore.config.VnpayConfig;
-import vn.ClothingStore.domain.payment.reqVnpayDTO;
 import vn.ClothingStore.domain.request.order.ReqOrderDTO;
+import vn.ClothingStore.domain.request.payment.reqVnpayDTO;
 
 @Service
 public class PaymentService {

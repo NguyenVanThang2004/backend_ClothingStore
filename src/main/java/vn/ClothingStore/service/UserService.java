@@ -8,10 +8,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import vn.ClothingStore.domain.Role;
 import vn.ClothingStore.domain.User;
+import vn.ClothingStore.domain.request.user.ReqChangePassworDTO;
 import vn.ClothingStore.domain.response.ResultPaginationDTO;
 import vn.ClothingStore.domain.response.user.ResCreateUserDTO;
 import vn.ClothingStore.domain.response.user.ResUpdateUserDTO;
@@ -19,18 +22,23 @@ import vn.ClothingStore.domain.response.user.ResUserDTO;
 import vn.ClothingStore.repository.RoleRepository;
 import vn.ClothingStore.repository.UserRepository;
 import vn.ClothingStore.specifications.UserSpecs;
+import vn.ClothingStore.util.error.IdInvalidException;
 
 @Service
 public class UserService {
+
+    private final PasswordEncoder passwordEncoder;
 
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
     private final RoleService roleService;
 
-    public UserService(UserRepository userRepository, RoleService roleService, RoleRepository roleRepository) {
+    public UserService(UserRepository userRepository, RoleService roleService, RoleRepository roleRepository,
+            PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleService = roleService;
         this.roleRepository = roleRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<User> getAllUser() {
@@ -189,6 +197,40 @@ public class UserService {
 
     public User getUserByRefreshTokenAndEmail(String token, String email) {
         return this.userRepository.findByRefreshTokenAndEmail(token, email);
+    }
+
+    // change password
+    public void changePassword(int id, ReqChangePassworDTO req) throws IdInvalidException {
+        User currentUser = this.fetchUserById(id);
+        if (currentUser == null) {
+            throw new IdInvalidException("User với id " + id + "không tồn tại");
+        }
+
+        if (!passwordEncoder.matches(req.getOldPassword(), currentUser.getPassword())) {
+            throw new IdInvalidException("Mật khẩu cũ không đúng");
+        }
+        if (!passwordEncoder.matches(req.getNewPassword(), req.getReEnterPassword())) {
+            throw new IdInvalidException("nhập lại mật không đúng");
+        }
+        currentUser.setPassword(passwordEncoder.encode(req.getNewPassword()));
+
+        this.userRepository.save(currentUser);
+
+    }
+
+    // reset password
+    public void resetPassword(String email, String newPassword) throws IdInvalidException {
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new IdInvalidException("Email không tồn tại trong hệ thống");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email);
     }
 
 }
