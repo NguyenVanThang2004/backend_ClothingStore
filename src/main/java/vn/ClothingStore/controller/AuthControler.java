@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import vn.ClothingStore.domain.User;
 import vn.ClothingStore.domain.request.login.ReqLoginDTO;
+import vn.ClothingStore.domain.request.register.ReqCreateVerifyOtpDTO;
 import vn.ClothingStore.domain.response.ResLoginDTO;
 import vn.ClothingStore.domain.response.ResLoginDTO.UserLogin;
 import vn.ClothingStore.domain.response.user.ResCreateUserDTO;
@@ -232,11 +233,53 @@ public class AuthControler {
         return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.convertToResCreateUserDTO(TUser));
     }
 
+    @PostMapping("/auth/verify-register-otp")
+    @ApiMessage("Register a new user")
+    public ResponseEntity<String> verigyRegisterOtp(@Valid @RequestBody User user) throws IdInvalidException {
+        boolean isEmailExist = this.userService.isEmailExist(user.getEmail());
+        if (isEmailExist) {
+            throw new IdInvalidException(
+                    "Email " + user.getEmail() + " đã tồn tại, vui lòng sử dụng email khác.");
+
+        }
+
+        this.emailService.sendEmailFromTemplateSync(user.getEmail(), "Xác thực tài toản", "templateVerifyEmail",
+                this.otpService.generateOtp6Digits(user.getEmail()));
+
+        return ResponseEntity.ok("OTP đã gửi qua email ,vui lòng xác thực tài khoản");
+    }
+
+    @PostMapping("/auth/create-verify-otp")
+    @ApiMessage("Verify OTP and create account")
+    public ResponseEntity<String> createAccountAfterVerifyOtp(
+            @Valid @RequestBody ReqCreateVerifyOtpDTO req) throws IdInvalidException {
+
+        boolean valid = this.otpService.verifyOtp(req.getEmail(), req.getOtp());
+        if (!valid) {
+            throw new IdInvalidException("OTP không hợp lệ hoặc đã hết hạn");
+        }
+
+        User user = new User();
+        user.setEmail(req.getEmail());
+        user.setFullName(req.getFullName());
+        user.setPhoneNumber(req.getPhoneNumber());
+        user.setPassword(req.getPassword());
+
+        this.userService.createUser(user);
+
+        return ResponseEntity.ok("Tạo tài khoản thành công, bạn có thể đăng nhập!");
+    }
+
     @GetMapping("/auth/forgot-password-send-email")
     @ApiMessage("forgot password send email success")
-    public ResponseEntity<String> forgotPassword(@RequestParam String email) {
-        String otpCode = otpService.generateOtp6Digits(email);
+    public ResponseEntity<String> forgotPassword(@RequestParam String email) throws IdInvalidException {
+        boolean isEmailExist = this.userService.isEmailExist(email);
+        if (!isEmailExist) {
+            throw new IdInvalidException("vui lòng nhập lại email bạn đã đăng kí");
 
+        }
+
+        String otpCode = otpService.generateOtp6Digits(email);
         emailService.sendEmailFromTemplateSync(
                 email,
                 "Xác thực quên mật khẩu",

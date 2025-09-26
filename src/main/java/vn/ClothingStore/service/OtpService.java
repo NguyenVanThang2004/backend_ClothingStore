@@ -20,7 +20,7 @@ public class OtpService {
 
     public String generateOtp6Digits(String email) {
         String otpCode = String.format("%06d", random.nextInt(999999));
-        Instant expiryTime = Instant.now().plusSeconds(120); // 2 phút
+        Instant expiryTime = Instant.now().plusSeconds(300); // 2 phút
 
         Otp otp = new Otp(email, otpCode, expiryTime);
         otpRepository.save(otp);
