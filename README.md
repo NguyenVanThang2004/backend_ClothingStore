@@ -25,6 +25,8 @@
 - Cloudinary (lưu trữ ảnh)
 - Lombok
 - Maven
+- Frontend: Angular 16+ (TypeScript, RxJS, Interceptor JWT, Route Guards,...)
+- Repo (FE): https://github.com/NguyenVanThang2004/Frontend_ClothingStore
 
 ## Cấu trúc thư mục
 
