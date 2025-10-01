@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,6 +30,7 @@ public class ProductVariantController {
         this.productVariantService = productVariantService;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/productVariant")
     public ResponseEntity<ResProductVariantDTO> createProductVariant(@RequestBody ProductVariant productVariant)
             throws IdInvalidException {
@@ -38,6 +40,7 @@ public class ProductVariantController {
                 .body(this.productVariantService.convertToResProductVariantDTO(p));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/productVariant/{productId}/variants/{variantId}")
     public ResponseEntity<ResProductVariantDTO> updateProductVariant(
             @PathVariable("productId") int productId,

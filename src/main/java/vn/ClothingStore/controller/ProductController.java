@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -72,6 +73,7 @@ public class ProductController {
         return ResponseEntity.ok(this.productService.fetchAllProduct(spec, pageable));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     @ApiMessage("Create product success")
     public ResponseEntity<ResProductDTO> createProduct(
@@ -81,6 +83,7 @@ public class ProductController {
                 .body(this.productService.convertToResProductDTO(product));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     @ApiMessage("Update product success")
     public ResponseEntity<ResProductDTO> updateProduct(
@@ -90,6 +93,7 @@ public class ProductController {
         return ResponseEntity.ok(this.productService.convertToResProductDTO(saved));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     @ApiMessage("Delete product success")
     public ResponseEntity<Void> deleteProduct(@PathVariable("id") int id) throws IdInvalidException {

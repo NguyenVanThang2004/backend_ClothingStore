@@ -36,8 +36,8 @@ public class SecurityConfiguration {
 
     @Bean // ma hoa mat khau su dung thuat toan Bcrypt
     public PasswordEncoder passwordEncoder() {
-        // return new BCryptPasswordEncoder();
-        return NoOpPasswordEncoder.getInstance();
+        return new BCryptPasswordEncoder();
+
     }
 
     @Bean //
@@ -49,7 +49,9 @@ public class SecurityConfiguration {
                 "/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/register",
                 "/storage/**",
                 "/api/v1/email/**",
-                "/api/v1/users/forgot-password-reset"
+                "/api/v1/users/forgot-password-reset",
+                "/api/v1/payment/return",
+                "/api/v1/auth/**"
 
         };
         http
@@ -57,12 +59,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(
                         authz -> authz
                                 .requestMatchers(whiteList).permitAll()
-
-                                // chỉ ADMIN mới được tạo/sửa/xóa user
-                                .requestMatchers(HttpMethod.POST, "/api/v1/users/**").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.DELETE, "/api/v1/users/**").hasRole("ADMIN")
-
-                                .anyRequest().permitAll()
+                                .anyRequest().authenticated()
 
                 )
                 .oauth2ResourceServer(

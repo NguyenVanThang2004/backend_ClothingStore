@@ -1,6 +1,7 @@
 package vn.ClothingStore.controller;
 
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import vn.ClothingStore.domain.response.reports.RevenuePointDTO;
 import vn.ClothingStore.domain.response.reports.RevenueReportDTO;
@@ -24,6 +25,7 @@ public class ReportController {
         this.reportService = reportService;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/reports/revenue/daily")
     @ApiMessage("Lấy báo cáo doanh thu theo ngày thành công")
     public RevenueReportDTO revenueDaily(
@@ -37,6 +39,7 @@ public class ReportController {
         return new RevenueReportDTO(points, summary);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/reports/revenue/monthly")
     @ApiMessage("Lấy báo cáo doanh thu theo tháng thành công")
     public RevenueReportDTO revenueMonthly(@RequestParam int year) throws IdInvalidException {
@@ -50,6 +53,7 @@ public class ReportController {
         return new RevenueReportDTO(points, summary);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("reports/revenue/yearly")
     @ApiMessage("Lấy báo cáo doanh thu theo năm thành công")
     public RevenueReportDTO revenueYearly(

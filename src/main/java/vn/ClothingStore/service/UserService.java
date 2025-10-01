@@ -209,8 +209,8 @@ public class UserService {
         if (!passwordEncoder.matches(req.getOldPassword(), currentUser.getPassword())) {
             throw new IdInvalidException("Mật khẩu cũ không đúng");
         }
-        if (!passwordEncoder.matches(req.getNewPassword(), req.getReEnterPassword())) {
-            throw new IdInvalidException("nhập lại mật không đúng");
+        if (!req.getNewPassword().equals(req.getReEnterPassword())) {
+            throw new IdInvalidException("nhập lại mật khẩu không đúng");
         }
         currentUser.setPassword(passwordEncoder.encode(req.getNewPassword()));
 

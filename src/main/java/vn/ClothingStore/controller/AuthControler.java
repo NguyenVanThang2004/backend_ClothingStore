@@ -263,7 +263,7 @@ public class AuthControler {
         user.setEmail(req.getEmail());
         user.setFullName(req.getFullName());
         user.setPhoneNumber(req.getPhoneNumber());
-        user.setPassword(req.getPassword());
+        user.setPassword(passwordEncoder.encode(req.getPassword()));
 
         this.userService.createUser(user);
 
