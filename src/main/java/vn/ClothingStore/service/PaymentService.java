@@ -3,20 +3,12 @@ package vn.ClothingStore.service;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.net.URLEncoder;
-import org.springframework.http.HttpStatus;
 
-import org.springframework.http.ResponseEntity;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
-
 import vn.ClothingStore.config.VnpayConfig;
 import vn.ClothingStore.domain.request.order.ReqOrderDTO;
 import vn.ClothingStore.domain.request.payment.reqVnpayDTO;
@@ -26,7 +18,6 @@ public class PaymentService {
 
     private final VnpayConfig vnpayConfig;
     private final OrderService orderService;
-    // Bộ nhớ tạm để map TxnRef -> ReqOrderDTO
     private final Map<String, ReqOrderDTO> pendingOrders = new ConcurrentHashMap<>();
 
     public PaymentService(VnpayConfig vnpayConfig, OrderService orderService) {
@@ -34,7 +25,7 @@ public class PaymentService {
         this.orderService = orderService;
     }
 
-    public String createPayment(reqVnpayDTO paymentRequest) throws UnsupportedEncodingException {
+    public String createPayment(reqVnpayDTO paymentRequest, HttpServletRequest request) throws UnsupportedEncodingException {
         String vnp_Version = "2.1.0";
         String vnp_Command = "pay";
         String orderType = "other";
@@ -48,7 +39,7 @@ public class PaymentService {
 
         String bankCode = "NCB";
         String vnp_TxnRef = VnpayConfig.getRandomNumber(8);
-        String vnp_IpAddr = "127.0.0.1";
+        String vnp_IpAddr = VnpayConfig.getIpAddress(request);
 
         Map<String, String> vnp_Params = new HashMap<>();
         vnp_Params.put("vnp_Version", vnp_Version);
@@ -56,7 +47,6 @@ public class PaymentService {
         vnp_Params.put("vnp_TmnCode", vnpayConfig.getVnpTmnCode());
         vnp_Params.put("vnp_Amount", String.valueOf(amount));
         vnp_Params.put("vnp_CurrCode", "VND");
-
         vnp_Params.put("vnp_BankCode", bankCode);
         vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
         vnp_Params.put("vnp_OrderInfo", "Thanh toan don hang:" + vnp_TxnRef);
@@ -99,14 +89,12 @@ public class PaymentService {
         String vnp_SecureHash = VnpayConfig.hmacSHA512(vnpayConfig.getSecretKey(), hashData.toString());
         query.append("&vnp_SecureHash=").append(vnp_SecureHash);
 
-        // lưu đơn hàng tạm vào map
         pendingOrders.put(vnp_TxnRef, paymentRequest.getOrderRequest());
         return vnpayConfig.getVnpPayUrl() + "?" + query;
     }
 
     public void handlePaymentSuccess(Map<String, String> allParams) {
         String txnRef = allParams.get("vnp_TxnRef");
-
         ReqOrderDTO req = pendingOrders.remove(txnRef);
         if (req != null) {
             try {

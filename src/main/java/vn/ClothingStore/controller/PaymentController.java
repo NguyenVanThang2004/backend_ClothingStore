@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.cloudinary.http44.api.Response;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import vn.ClothingStore.domain.request.payment.reqVnpayDTO;
@@ -27,14 +29,18 @@ import vn.ClothingStore.service.PaymentService;
 public class PaymentController {
     private final PaymentService paymentService;
 
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
+
     public PaymentController(PaymentService paymentService) {
         this.paymentService = paymentService;
     }
 
     @PostMapping("/payment")
-    public ResponseEntity<String> createPayment(@RequestBody reqVnpayDTO paymentRequest) {
+    public ResponseEntity<String> createPayment(@RequestBody reqVnpayDTO paymentRequest,
+            HttpServletRequest request) {
         try {
-            String paymentUrl = paymentService.createPayment(paymentRequest);
+            String paymentUrl = paymentService.createPayment(paymentRequest, request);
             return ResponseEntity.ok(paymentUrl);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
@@ -51,10 +57,10 @@ public class PaymentController {
         if ("00".equals(responseCode)) {
             // Thanh toán thành công → tạo đơn hàng
             this.paymentService.handlePaymentSuccess(allParams);
-            redirectUrl = "http://localhost:4200/payment-result?status=SUCCESS";
+            redirectUrl = frontendUrl + "/payment-result?status=SUCCESS";
             log.info("VNPAY responseCode={}, redirectUrl={}", responseCode, redirectUrl);
         } else {
-            redirectUrl = "http://localhost:4200/payment-result?status=FAILED";
+            redirectUrl = frontendUrl + "/payment-result?status=FAILED";
             log.warn("VNPAY responseCode={}, redirectUrl={}", responseCode, redirectUrl);
         }
 

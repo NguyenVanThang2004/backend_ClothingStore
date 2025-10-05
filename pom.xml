@@ -117,7 +117,7 @@
 <dependency>
   <groupId>me.paulschwarz</groupId>
   <artifactId>spring-dotenv</artifactId>
-  <version>2.5.4</version>
+  <version>3.0.0</version>
 </dependency>
 
 <!-- spring mail -->
@@ -135,15 +135,13 @@
     <groupId>org.thymeleaf.extras</groupId>
     <artifactId>thymeleaf-extras-springsecurity6</artifactId>
 </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
 
 
-
-
-
-
-
-
-	</dependencies>
+    </dependencies>
 
 	<build>
 		<plugins>

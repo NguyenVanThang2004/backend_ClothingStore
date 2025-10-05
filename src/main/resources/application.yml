@@ -1,6 +1,6 @@
 spring:
   application:
-    name: ${SPRING_APP_NAME}
+    name: ${SPRING_APP_NAME:ClothingStore}
 
   datasource:
     url: ${DB_URL}
@@ -18,18 +18,18 @@ spring:
     multipart:
       max-file-size: 50MB
       max-request-size: 50MB
+
   mail:
-    host: ${SPRING_MAIL_HOST}
-    port: ${SPRING_MAIL_PORT}
-    username: ${SPRING_MAIL_USERNAME}
-    password: ${SPRING_MAIL_PASSWORD}
+    host: ${SPRING_MAIL_HOST:}
+    port: ${SPRING_MAIL_PORT:25}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
     properties:
       mail:
         smtp:
-          auth: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH}
+          auth: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH:false}
           starttls:
-            enable: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE}
-      
+            enable: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE:false}
 
 backend:
   jwt:
@@ -45,10 +45,12 @@ cloudinary:
   api-key: ${CLOUD_API_KEY}
   api-secret: ${CLOUD_API_SECRET}
 
-
 vnpay:
-  pay-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-  return-url: http://localhost:8080/api/v1/payment/return
-  tmn-code: JGV9MSIF
-  secret-key: E9QLQ1W7KCLQKQLE5522R5JNRR7WIV8I
-  api-url: https://sandbox.vnpayment.vn/merchant_webapi/api/transaction
+  pay-url: ${VNPAY_PAY_URL}
+  return-url: ${VNPAY_RETURN_URL}
+  tmn-code: ${VNPAY_TMN_CODE}
+  secret-key: ${VNPAY_SECRET_KEY}
+  api-url: ${VNPAY_API_URL}
+
+app:
+  frontend-url: ${FRONTEND_URL}
